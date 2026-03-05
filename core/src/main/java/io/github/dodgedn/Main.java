@@ -58,7 +58,7 @@ public class Main implements ApplicationListener {
     Rectangle rosqRectangle;
     Rectangle duffRectangle;
     Rectangle slowBulletRectangle;
-    float cooldownDisparo;
+    float timerDisparo;
     float vidaHomer = 100f;
     int vidaBart = 3;
     boolean derecha = true;
@@ -132,7 +132,8 @@ public class Main implements ApplicationListener {
     private void input() {
         float speed = 500f;
         float delta = Gdx.graphics.getDeltaTime();
-        cooldownDisparo += delta;
+        timerDisparo += delta;
+        float cooldownDisparo;
 
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT))
             speed = speed / 2f;
@@ -155,16 +156,25 @@ public class Main implements ApplicationListener {
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.Z))
         {
-            if (cooldownDisparo > 1f) {
+            if (vidaBart==3)
+                cooldownDisparo = 1f;
+            else if (vidaBart==2)
+                cooldownDisparo = 1.5f;
+            else
+                cooldownDisparo = 2f;
+
+            if (timerDisparo > cooldownDisparo) {
                 createDuff();
-                cooldownDisparo = 0f;
+                timerDisparo = 0f;
             }
         }
+
+
     }
 
     private void logic() {
-        float duffSpeed = 1000f;
-        float homerSpeed = 300f;
+        float duffSpeed = 1500f;
+        float homerSpeed = vidaHomer*10;
         float slowBulletSpeed = -100f;
         float bulletSpeed = -700f;
 
@@ -269,9 +279,9 @@ public class Main implements ApplicationListener {
             }
         }
 
-        // cooldown entre cada bala
+        // cooldown entre cada bala, decide si es lenta o rápida
         timer += delta;
-        if (timer > MathUtils.random(0.01f, 50f)) {
+        if (timer > MathUtils.random(0.01f, 40f)) {
             boolean fast = MathUtils.randomBoolean();
             if (fast)
                 createBullet();
