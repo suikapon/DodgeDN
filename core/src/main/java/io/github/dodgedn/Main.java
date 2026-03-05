@@ -41,6 +41,10 @@ public class Main implements ApplicationListener {
     Vector2 touchPos;
     Array<Sprite> bulletSprites;
 
+    float timer;
+    float vidaHomer = 100f;
+    boolean derecha = true;
+
     @Override
     public void create() {
         bgTexture = new Texture("bg2.png");
@@ -57,13 +61,18 @@ public class Main implements ApplicationListener {
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(500,800);
+
+        viewport = new FitViewport(600,800);
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
 
         bartSprite = new Sprite(bartTexture);
-        bartSprite.setSize(50,100);
+        bartSprite.setSize(40,90);
+        bartSprite.setPosition(worldWidth/2-bartSprite.getWidth(),0);
 
         homerSprite = new Sprite(homerTexture);
-        homerSprite.setSize(70,120);
+        homerSprite.setSize(60,110);
+        homerSprite.setPosition(worldWidth/2-homerSprite.getWidth(),worldHeight-100-homerSprite.getHeight());
 
         touchPos = new Vector2();
 
@@ -92,10 +101,16 @@ public class Main implements ApplicationListener {
             speed = speed / 2f;
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT))
+        {
+            bartSprite.setFlip(true,false);
             bartSprite.translateX(speed * delta);
+        }
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT))
+        {
             bartSprite.translateX(-speed * delta);
+            bartSprite.setFlip(false,false);
+        }
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP))
             bartSprite.translateY(speed*delta);
@@ -105,6 +120,9 @@ public class Main implements ApplicationListener {
     }
 
     private void logic() {
+        float homerSpeed = 200f;
+        float bulletSpeed = -200f;
+
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
@@ -113,6 +131,37 @@ public class Main implements ApplicationListener {
 
         bartSprite.setX(MathUtils.clamp(bartSprite.getX(),0,worldWidth-bartWidth));
         bartSprite.setY(MathUtils.clamp(bartSprite.getY(),0,worldHeight-bartHeight));
+
+        float delta = Gdx.graphics.getDeltaTime();
+
+        // lógica movimiento homer
+
+        if (vidaHomer>0)
+        {
+            if (derecha)
+            {
+                homerSprite.translateX(homerSpeed*delta);
+                if (homerSprite.getX() >= viewport.getWorldWidth() - homerSprite.getWidth())
+                    derecha = false;
+            } else {
+                homerSprite.translateX(-homerSpeed*delta);
+                if (homerSprite.getX() <= 0) {
+                    derecha = true;
+                }
+            }
+        }
+
+        for (Sprite bulletSprite : bulletSprites)
+        {
+            bulletSprite.translateY(bulletSpeed*delta);
+        }
+
+        timer += delta;
+        if (timer>MathUtils.random(0.1f,100f)) {
+            timer = 0;
+            createBullet();
+        }
+
     }
 
     private void draw() {
@@ -126,8 +175,7 @@ public class Main implements ApplicationListener {
 
         spriteBatch.draw(bgTexture, 0, 0, worldWidth, worldHeight); // fondo
         bartSprite.draw(spriteBatch);
-
-        spriteBatch.draw(homerTexture, 200, 600, 70, 120); // enemigo
+        homerSprite.draw(spriteBatch);
 
         for (Sprite bulletSprite : bulletSprites)
         {
@@ -139,15 +187,15 @@ public class Main implements ApplicationListener {
 
     private void createBullet()
     {
-        float bulletWidth = 50;
-        float bulletHeight = 50;
+        float bulletWidth = 25;
+        float bulletHeight = 25;
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
         Sprite bulletSprite = new Sprite(bulletTexture);
         bulletSprite.setSize(bulletWidth,bulletHeight);
-        bulletSprite.setX(0);
-        bulletSprite.setY(worldHeight);
+
+        bulletSprite.setPosition(homerSprite.getX(),homerSprite.getY());
         bulletSprites.add(bulletSprite);
     }
 
