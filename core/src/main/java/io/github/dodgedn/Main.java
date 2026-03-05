@@ -63,6 +63,8 @@ public class Main implements ApplicationListener {
     int vidaBart = 3;
     boolean derecha = true;
 
+    float cooldownDisparo;
+
     @Override
     public void create() {
         bgTexture = new Texture("bg2.png");
@@ -115,6 +117,8 @@ public class Main implements ApplicationListener {
         music.setLooping(true);
         music.setVolume(0.2f);
         music.play();
+
+        cooldownDisparo = MathUtils.random(0.01f, 2f);
     }
 
     @Override
@@ -130,7 +134,7 @@ public class Main implements ApplicationListener {
     }
 
     private void input() {
-        float speed = 500f;
+        float speed = 300f+ (float) vidaBart*100;
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
         float cooldownDisparo;
@@ -174,9 +178,9 @@ public class Main implements ApplicationListener {
 
     private void logic() {
         float duffSpeed = 1500f;
-        float homerSpeed = vidaHomer*10;
+        float homerSpeed = vidaHomer*11;
         float slowBulletSpeed = -100f;
-        float bulletSpeed = -700f;
+        float bulletSpeed = -600f;
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -224,7 +228,11 @@ public class Main implements ApplicationListener {
             float bulletWidth = bulletSprite.getWidth();
             float bulletHeight = bulletSprite.getHeight();
 
-            bulletSprite.translateY((bulletSpeed * delta));
+            if (bulletSprite.getY()>=500)
+                bulletSprite.translateY((bulletSpeed *2* delta));
+            else
+                bulletSprite.translateY((bulletSpeed * delta));
+
 
             bulletRectangle.set(bulletSprite.getX(), bulletSprite.getY(), bulletWidth, bulletHeight);
 
@@ -242,7 +250,11 @@ public class Main implements ApplicationListener {
             float slowBulletWidth = slowBulletSprite.getWidth();
             float slowBulletHeight = slowBulletSprite.getHeight();
 
-            slowBulletSprite.translateY((slowBulletSpeed * delta));
+            // empieza rápido, termina lento
+            if (slowBulletSprite.getY()>=500)
+                slowBulletSprite.translateY((slowBulletSpeed * 2 * delta));
+            else
+                slowBulletSprite.translateY((slowBulletSpeed * delta));
 
             slowBulletRectangle.set(slowBulletSprite.getX(), slowBulletSprite.getY(), slowBulletWidth, slowBulletHeight);
 
@@ -281,13 +293,14 @@ public class Main implements ApplicationListener {
 
         // cooldown entre cada bala, decide si es lenta o rápida
         timer += delta;
-        if (timer > MathUtils.random(0.01f, 40f)) {
+        if (timer > cooldownDisparo) {
             boolean fast = MathUtils.randomBoolean();
             if (fast)
                 createBullet();
             else
                 createSlowBullet();
             timer = 0;
+            cooldownDisparo = MathUtils.random(0.001f, vidaHomer/100f);
         }
 
     }
