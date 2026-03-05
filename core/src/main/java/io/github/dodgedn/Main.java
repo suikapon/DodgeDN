@@ -32,6 +32,7 @@ public class Main implements ApplicationListener {
     Texture homerSemiSleepingTexture;
     Texture homerSleepingTexture;
     Texture rosquillaTexture;
+    Texture slowBulletTexture;
 
     Sound piu;
     Sound bDoh;
@@ -46,6 +47,7 @@ public class Main implements ApplicationListener {
 
     Vector2 touchPos;
     Array<Sprite> bulletSprites;
+    Array<Sprite> slowBulletSprites;
     Array<Sprite> rosqSprites;
     Array<Sprite> duffSprites;
 
@@ -55,6 +57,8 @@ public class Main implements ApplicationListener {
     Rectangle bulletRectangle;
     Rectangle rosqRectangle;
     Rectangle duffRectangle;
+    Rectangle slowBulletRectangle;
+    float cooldownDisparo;
     float vidaHomer = 100f;
     int vidaBart = 3;
     boolean derecha = true;
@@ -67,6 +71,7 @@ public class Main implements ApplicationListener {
         blueBartTexture = new Texture("bartoloblue.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
         bulletTexture = new Texture("bullet.png");
+        slowBulletTexture = new Texture("slowbullet.png");
         duffTexture = new Texture("duff.png");
         homerTexture = new Texture("homer.png");
         homerSemiSleepingTexture = new Texture("homeralmsleep.png");
@@ -96,12 +101,14 @@ public class Main implements ApplicationListener {
         bulletSprites = new Array<>();
         rosqSprites = new Array<>();
         duffSprites = new Array<>();
+        slowBulletSprites = new Array<>();
 
         bartRectangle = new Rectangle();
         homerRectangle = new Rectangle();
         bulletRectangle = new Rectangle();
         duffRectangle = new Rectangle();
         rosqRectangle = new Rectangle();
+        slowBulletRectangle = new Rectangle();
 
         bDoh.setVolume(0,0.5f);
 
@@ -125,6 +132,7 @@ public class Main implements ApplicationListener {
     private void input() {
         float speed = 500f;
         float delta = Gdx.graphics.getDeltaTime();
+        cooldownDisparo += delta;
 
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT))
             speed = speed / 2f;
@@ -145,17 +153,20 @@ public class Main implements ApplicationListener {
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN))
             bartSprite.translateY(-speed * delta);
 
-        if (Gdx.input.isKeyPressed(Input.Keys.Z))
-            createDuff();
-
-        if (Gdx.input.isKeyPressed(Input.Keys.D))
-            createDuff();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Z))
+        {
+            if (cooldownDisparo > 1f) {
+                createDuff();
+                cooldownDisparo = 0f;
+            }
+        }
     }
 
     private void logic() {
-        float duffSpeed = 300f;
+        float duffSpeed = 1000f;
         float homerSpeed = 300f;
-        float bulletSpeed = MathUtils.random(-200f, -1000f);
+        float slowBulletSpeed = -100f;
+        float bulletSpeed = -700f;
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -204,6 +215,7 @@ public class Main implements ApplicationListener {
             float bulletHeight = bulletSprite.getHeight();
 
             bulletSprite.translateY((bulletSpeed * delta));
+
             bulletRectangle.set(bulletSprite.getX(), bulletSprite.getY(), bulletWidth, bulletHeight);
 
             if (bulletSprite.getY() < -bulletHeight)
@@ -212,6 +224,24 @@ public class Main implements ApplicationListener {
                 bDoh.play();
                 vidaBart--;
                 bulletSprites.removeIndex(i);
+            }
+        }
+
+        for (int i = slowBulletSprites.size - 1; i >= 0; i--) {
+            Sprite slowBulletSprite = slowBulletSprites.get(i);
+            float slowBulletWidth = slowBulletSprite.getWidth();
+            float slowBulletHeight = slowBulletSprite.getHeight();
+
+            slowBulletSprite.translateY((slowBulletSpeed * delta));
+
+            slowBulletRectangle.set(slowBulletSprite.getX(), slowBulletSprite.getY(), slowBulletWidth, slowBulletHeight);
+
+            if (slowBulletSprite.getY() < -slowBulletHeight)
+                slowBulletSprites.removeIndex(i);
+            else if (bartRectangle.overlaps(slowBulletRectangle)) {
+                bDoh.play();
+                vidaBart--;
+                slowBulletSprites.removeIndex(i);
             }
         }
 
@@ -234,15 +264,19 @@ public class Main implements ApplicationListener {
                 duffSprites.removeIndex(i);
             else if (homerRectangle.overlaps(duffRectangle)) {
                 hDoh.play();
-                vidaHomer--;
+                vidaHomer-=5;
                 duffSprites.removeIndex(i);
             }
         }
 
         // cooldown entre cada bala
         timer += delta;
-        if (timer > MathUtils.random(0.01f, 100f)) {
-            createBullet();
+        if (timer > MathUtils.random(0.01f, 50f)) {
+            boolean fast = MathUtils.randomBoolean();
+            if (fast)
+                createBullet();
+            else
+                createSlowBullet();
             timer = 0;
         }
 
@@ -265,6 +299,10 @@ public class Main implements ApplicationListener {
             bulletSprite.draw(spriteBatch);
         }
 
+        for (Sprite slowBulletSprite : slowBulletSprites) {
+            slowBulletSprite.draw(spriteBatch);
+        }
+
         for (Sprite duffSprite : duffSprites) {
             duffSprite.draw(spriteBatch);
         }
@@ -276,14 +314,24 @@ public class Main implements ApplicationListener {
         piu.play();
         float bulletWidth = 25;
         float bulletHeight = 25;
-        float worldWidth = viewport.getWorldWidth();
-        float worldHeight = viewport.getWorldHeight();
 
         Sprite bulletSprite = new Sprite(bulletTexture);
         bulletSprite.setSize(bulletWidth, bulletHeight);
 
         bulletSprite.setPosition(homerSprite.getX(), homerSprite.getY());
         bulletSprites.add(bulletSprite);
+    }
+
+    private void createSlowBullet() {
+        piu.play();
+        float slowBulletWidth = 30;
+        float slowBulletHeight = 30;
+
+        Sprite slowBulletSprite = new Sprite(slowBulletTexture);
+        slowBulletSprite.setSize(slowBulletWidth, slowBulletHeight);
+
+        slowBulletSprite.setPosition(homerSprite.getX(), homerSprite.getY());
+        slowBulletSprites.add(slowBulletSprite);
     }
 
     private void createRosquilla()
@@ -302,10 +350,8 @@ public class Main implements ApplicationListener {
 
     private void createDuff()
     {
-        float duffWidth = 25;
-        float duffHeight = 25;
-        float worldWidth = viewport.getWorldWidth();
-        float worldHeight = viewport.getWorldHeight();
+        float duffWidth = 30;
+        float duffHeight = 50;
 
         Sprite duffSprite = new Sprite(duffTexture);
         duffSprite.setSize(duffWidth, duffHeight);
