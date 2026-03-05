@@ -11,23 +11,29 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+/**
+ * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
+ */
 public class Main implements ApplicationListener {
     Texture bgTexture;
     Texture bartTexture;
     Texture blueBartTexture;
+    Texture deadBart;
     Texture bartHurtedTexture;
     Texture bulletTexture;
     Texture duffTexture;
     Texture homerTexture;
     Texture homerSemiSleepingTexture;
     Texture homerSleepingTexture;
+    Texture rosquillaTexture;
 
+    Sound piu;
     Sound bDoh;
     Sound hDoh;
     Music music;
@@ -40,15 +46,24 @@ public class Main implements ApplicationListener {
 
     Vector2 touchPos;
     Array<Sprite> bulletSprites;
+    Array<Sprite> rosqSprites;
+    Array<Sprite> duffSprites;
 
     float timer;
+    Rectangle bartRectangle;
+    Rectangle homerRectangle;
+    Rectangle bulletRectangle;
+    Rectangle rosqRectangle;
+    Rectangle duffRectangle;
     float vidaHomer = 100f;
+    int vidaBart = 3;
     boolean derecha = true;
 
     @Override
     public void create() {
         bgTexture = new Texture("bg2.png");
         bartTexture = new Texture("bartolo.png");
+        deadBart = new Texture("bartdead.png");
         blueBartTexture = new Texture("bartoloblue.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
         bulletTexture = new Texture("bullet.png");
@@ -56,29 +71,43 @@ public class Main implements ApplicationListener {
         homerTexture = new Texture("homer.png");
         homerSemiSleepingTexture = new Texture("homeralmsleep.png");
         homerSleepingTexture = new Texture("homersleep.png");
+        rosquillaTexture = new Texture("rosquilla.png");
         bDoh = Gdx.audio.newSound(Gdx.files.internal("bart_doh.mp3"));
         hDoh = Gdx.audio.newSound(Gdx.files.internal("homer_doh.mp3"));
+        piu = Gdx.audio.newSound(Gdx.files.internal("piu.mp3"));
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
         spriteBatch = new SpriteBatch();
 
-        viewport = new FitViewport(600,800);
+        viewport = new FitViewport(600, 800);
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
         bartSprite = new Sprite(bartTexture);
-        bartSprite.setSize(40,90);
-        bartSprite.setPosition(worldWidth/2-bartSprite.getWidth(),0);
+        bartSprite.setSize(40, 90);
+        bartSprite.setPosition(worldWidth / 2 - bartSprite.getWidth(), 0);
 
         homerSprite = new Sprite(homerTexture);
-        homerSprite.setSize(60,110);
-        homerSprite.setPosition(worldWidth/2-homerSprite.getWidth(),worldHeight-100-homerSprite.getHeight());
+        homerSprite.setSize(60, 110);
+        homerSprite.setPosition(worldWidth / 2 - homerSprite.getWidth(), worldHeight - 100 - homerSprite.getHeight());
 
         touchPos = new Vector2();
 
         bulletSprites = new Array<>();
+        rosqSprites = new Array<>();
+        duffSprites = new Array<>();
 
-        createBullet();
+        bartRectangle = new Rectangle();
+        homerRectangle = new Rectangle();
+        bulletRectangle = new Rectangle();
+        duffRectangle = new Rectangle();
+        rosqRectangle = new Rectangle();
+
+        bDoh.setVolume(0,0.5f);
+
+        music.setLooping(true);
+        music.setVolume(0.2f);
+        music.play();
     }
 
     @Override
@@ -100,28 +129,33 @@ public class Main implements ApplicationListener {
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT))
             speed = speed / 2f;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT))
-        {
-            bartSprite.setFlip(true,false);
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            bartSprite.setFlip(true, false);
             bartSprite.translateX(speed * delta);
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT))
-        {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             bartSprite.translateX(-speed * delta);
-            bartSprite.setFlip(false,false);
+            bartSprite.setFlip(false, false);
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.UP))
-            bartSprite.translateY(speed*delta);
+            bartSprite.translateY(speed * delta);
 
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN))
-            bartSprite.translateY(-speed*delta);
+            bartSprite.translateY(-speed * delta);
+
+        if (Gdx.input.isKeyPressed(Input.Keys.Z))
+            createDuff();
+
+        if (Gdx.input.isKeyPressed(Input.Keys.D))
+            createDuff();
     }
 
     private void logic() {
-        float homerSpeed = 200f;
-        float bulletSpeed = -200f;
+        float duffSpeed = 300f;
+        float homerSpeed = 300f;
+        float bulletSpeed = MathUtils.random(-200f, -1000f);
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -129,37 +163,87 @@ public class Main implements ApplicationListener {
         float bartWidth = bartSprite.getWidth();
         float bartHeight = bartSprite.getHeight();
 
-        bartSprite.setX(MathUtils.clamp(bartSprite.getX(),0,worldWidth-bartWidth));
-        bartSprite.setY(MathUtils.clamp(bartSprite.getY(),0,worldHeight-bartHeight));
+        float homerWidth = homerSprite.getWidth();
+        float homerHeight = homerSprite.getHeight();
 
-        float delta = Gdx.graphics.getDeltaTime();
+        // evitar que bart se salga del mapa
+        bartSprite.setX(MathUtils.clamp(bartSprite.getX(), 0, worldWidth - bartWidth));
+        bartSprite.setY(MathUtils.clamp(bartSprite.getY(), 0, worldHeight - bartHeight));
+
+        float delta = Gdx.graphics.getDeltaTime(); // para lo de los fps
+
+        // hurtbox bart, más pequeña que el sprite, como se suele hacer en juegos de esquivar
+        bartRectangle.set(bartSprite.getX(), bartSprite.getY(), (float) (bartWidth/1.3), (float) (bartHeight/1.3));
+        homerRectangle.set(homerSprite.getX(), homerSprite.getY(), homerSprite.getWidth(), homerSprite.getHeight());
 
         // lógica movimiento homer
 
-        if (vidaHomer>0)
-        {
-            if (derecha)
-            {
-                homerSprite.translateX(homerSpeed*delta);
-                if (homerSprite.getX() >= viewport.getWorldWidth() - homerSprite.getWidth())
+        if (vidaHomer > 0) {
+            if (derecha) {
+                homerSprite.translateX(homerSpeed * delta);
+                if (homerSprite.getX() >= viewport.getWorldWidth() - homerWidth)
                     derecha = false;
             } else {
-                homerSprite.translateX(-homerSpeed*delta);
+                homerSprite.translateX(-homerSpeed * delta);
                 if (homerSprite.getX() <= 0) {
                     derecha = true;
                 }
             }
-        }
-
-        for (Sprite bulletSprite : bulletSprites)
+        } else
         {
-            bulletSprite.translateY(bulletSpeed*delta);
+            homerSprite.setTexture(homerSleepingTexture);
         }
 
+        if (vidaHomer<=50 && vidaHomer>0)
+            homerSprite.setTexture(homerSemiSleepingTexture);
+
+        // balas para esquivar. gravedad. se borran al terminar
+        for (int i = bulletSprites.size - 1; i >= 0; i--) {
+            Sprite bulletSprite = bulletSprites.get(i);
+            float bulletWidth = bulletSprite.getWidth();
+            float bulletHeight = bulletSprite.getHeight();
+
+            bulletSprite.translateY((bulletSpeed * delta));
+            bulletRectangle.set(bulletSprite.getX(), bulletSprite.getY(), bulletWidth, bulletHeight);
+
+            if (bulletSprite.getY() < -bulletHeight)
+                bulletSprites.removeIndex(i);
+            else if (bartRectangle.overlaps(bulletRectangle)) {
+                bDoh.play();
+                vidaBart--;
+                bulletSprites.removeIndex(i);
+            }
+        }
+
+        // bart
+        if (vidaBart==1)
+            bartSprite.setTexture(bartHurtedTexture);
+        if (vidaBart<=0)
+            bartSprite.setTexture(deadBart);
+
+        // duff (disparos)
+        for (int i = duffSprites.size - 1; i >= 0; i--) {
+            Sprite duffSprite = duffSprites.get(i);
+            float duffWidth = duffSprite.getWidth();
+            float duffHeight = duffSprite.getHeight();
+
+            duffSprite.translateY((duffSpeed * delta));
+            duffRectangle.set(duffSprite.getX(), duffSprite.getY(), duffWidth, duffHeight);
+
+            if (duffSprite.getY() < -duffHeight)
+                duffSprites.removeIndex(i);
+            else if (homerRectangle.overlaps(duffRectangle)) {
+                hDoh.play();
+                vidaHomer--;
+                duffSprites.removeIndex(i);
+            }
+        }
+
+        // cooldown entre cada bala
         timer += delta;
-        if (timer>MathUtils.random(0.1f,100f)) {
-            timer = 0;
+        if (timer > MathUtils.random(0.01f, 100f)) {
             createBullet();
+            timer = 0;
         }
 
     }
@@ -177,28 +261,58 @@ public class Main implements ApplicationListener {
         bartSprite.draw(spriteBatch);
         homerSprite.draw(spriteBatch);
 
-        for (Sprite bulletSprite : bulletSprites)
-        {
+        for (Sprite bulletSprite : bulletSprites) {
             bulletSprite.draw(spriteBatch);
+        }
+
+        for (Sprite duffSprite : duffSprites) {
+            duffSprite.draw(spriteBatch);
         }
 
         spriteBatch.end();
     }
 
-    private void createBullet()
-    {
+    private void createBullet() {
+        piu.play();
         float bulletWidth = 25;
         float bulletHeight = 25;
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
         Sprite bulletSprite = new Sprite(bulletTexture);
-        bulletSprite.setSize(bulletWidth,bulletHeight);
+        bulletSprite.setSize(bulletWidth, bulletHeight);
 
-        bulletSprite.setPosition(homerSprite.getX(),homerSprite.getY());
+        bulletSprite.setPosition(homerSprite.getX(), homerSprite.getY());
         bulletSprites.add(bulletSprite);
     }
 
+    private void createRosquilla()
+    {
+        float rosqWidth = 25;
+        float rosqHeight = 25;
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        Sprite rosqSprite = new Sprite(rosquillaTexture);
+        rosqSprite.setSize(rosqWidth, rosqHeight);
+
+        rosqSprite.setPosition(homerSprite.getX(), homerSprite.getY());
+        rosqSprites.add(rosqSprite);
+    }
+
+    private void createDuff()
+    {
+        float duffWidth = 25;
+        float duffHeight = 25;
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        Sprite duffSprite = new Sprite(duffTexture);
+        duffSprite.setSize(duffWidth, duffHeight);
+
+        duffSprite.setPosition(bartSprite.getX(), bartSprite.getY());
+        duffSprites.add(duffSprite);
+    }
 
 
     @Override
