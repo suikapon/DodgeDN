@@ -41,6 +41,9 @@ public class Main implements ApplicationListener {
     Texture chipTexture;
     Texture brokenChipTexture;
     Texture bartHurtedShiftTexture;
+    Texture friendTexture;
+    Texture capaTexture;
+    Texture vidaTexture;
 
     Sound piu;
     Sound bDoh;
@@ -63,6 +66,9 @@ public class Main implements ApplicationListener {
     Array<Boolean> sideBulletsDerecha;
     Array<Sprite> diagonalBulletSprites;
     Array<Boolean> diagonalBulletDerecha;
+    Array<Sprite> capasSprites;
+    Array<Sprite> friendSprites;
+    Array<Sprite> vidaSprites;
 
     float timerBullets;
     float timerSideBullets;
@@ -76,6 +82,9 @@ public class Main implements ApplicationListener {
     Rectangle slowBulletRectangle;
     Rectangle sideBulletRectangle;
     Rectangle diagonalBulletRectangle;
+    Rectangle capaRectangle;
+    Rectangle friendRectangle;
+    Rectangle vidaRectangle;
 
     ShapeRenderer shapeRenderer;
     float maxVidaHomer = 100f;
@@ -92,6 +101,9 @@ public class Main implements ApplicationListener {
 
     @Override
     public void create() {
+        friendTexture = new Texture("friend.png");
+        capaTexture = new Texture("capa.png");
+        vidaTexture = new Texture("vida.png");
         bgTexture = new Texture("bg2.png");
         bartTexture = new Texture("bartolo.png");
         bartShiftTexture = new Texture("bartoloshift.png");
@@ -143,6 +155,9 @@ public class Main implements ApplicationListener {
         sideBulletsDerecha = new Array<>();
         diagonalBulletSprites = new Array<>();
         diagonalBulletDerecha = new Array<>();
+        capasSprites = new Array<>();
+        friendSprites = new Array<>();
+        vidaSprites = new Array<>();
 
         bartRectangle = new Rectangle();
         homerRectangle = new Rectangle();
@@ -152,6 +167,9 @@ public class Main implements ApplicationListener {
         slowBulletRectangle = new Rectangle();
         sideBulletRectangle = new Rectangle();
         diagonalBulletRectangle = new Rectangle();
+        capaRectangle = new Rectangle();
+        friendRectangle = new Rectangle();
+        vidaRectangle = new Rectangle();
 
         bDoh.setVolume(0, 0.5f);
 
