@@ -1,6 +1,5 @@
 package io.github.dodgedn;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -10,7 +9,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -31,6 +29,7 @@ public class Main implements ApplicationListener {
     Texture bartHurtedTexture;
     Texture bulletTexture;
     Texture sideBulletTexture;
+    Texture diagonalBulletTexture;
     Texture duffTexture;
     Texture homerTexture;
     Texture homerSemiSleepingTexture;
@@ -61,9 +60,13 @@ public class Main implements ApplicationListener {
     Array<Sprite> duffSprites;
     Array<Sprite> sideBulletSprites;
     Array<Boolean> sideBulletsDerecha;
+    Array<Sprite> diagonalBulletSprites;
+    Array<Boolean> diagonalBulletDerecha;
 
     float timerBullets;
     float timerSideBullets;
+    float timerDiagonalBullets;
+    float timerDisparo;
     Rectangle bartRectangle;
     Rectangle homerRectangle;
     Rectangle bulletRectangle;
@@ -71,12 +74,13 @@ public class Main implements ApplicationListener {
     Rectangle duffRectangle;
     Rectangle slowBulletRectangle;
     Rectangle sideBulletRectangle;
-    float timerDisparo;
+    Rectangle diagonalBulletRectangle;
     float vidaHomer = 100f;
     int vidaBart = 3;
     boolean derecha = true;
     float cooldownDisparo;
     float cooldownSideBullet;
+    float cooldownDiagonalBullet;
     float alphaShift = 1f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -95,6 +99,7 @@ public class Main implements ApplicationListener {
         bulletTexture = new Texture("bullet.png");
         slowBulletTexture = new Texture("slowbullet.png");
         sideBulletTexture = new Texture("sideBullet.png");
+        diagonalBulletTexture = new Texture("diagonalbullet.png");
         duffTexture = new Texture("duff.png");
         homerTexture = new Texture("homer.png");
         homerSemiSleepingTexture = new Texture("homeralmsleep.png");
@@ -131,6 +136,8 @@ public class Main implements ApplicationListener {
         slowBulletSprites = new Array<>();
         sideBulletSprites = new Array<>();
         sideBulletsDerecha = new Array<>();
+        diagonalBulletSprites = new Array<>();
+        diagonalBulletDerecha = new Array<>();
 
         bartRectangle = new Rectangle();
         homerRectangle = new Rectangle();
@@ -139,6 +146,7 @@ public class Main implements ApplicationListener {
         rosqRectangle = new Rectangle();
         slowBulletRectangle = new Rectangle();
         sideBulletRectangle = new Rectangle();
+        diagonalBulletRectangle = new Rectangle();
 
         bDoh.setVolume(0, 0.5f);
 
@@ -147,7 +155,8 @@ public class Main implements ApplicationListener {
         music.play();
 
         cooldownDisparo = MathUtils.random(0.01f, 2f);
-        cooldownSideBullet = MathUtils.random(1f,2f);
+        cooldownSideBullet = MathUtils.random(1f, 2f);
+        cooldownDiagonalBullet = MathUtils.random(2f, 4f);
     }
 
     @Override
@@ -214,7 +223,7 @@ public class Main implements ApplicationListener {
             else
                 cooldownDisparo = 2f;
 
-            if (timerDisparo > cooldownDisparo && estadoBart!=EstadoBart.DEAD) {
+            if (timerDisparo > cooldownDisparo && estadoBart != EstadoBart.DEAD) {
                 createDuff();
                 timerDisparo = 0f;
             }
@@ -228,7 +237,8 @@ public class Main implements ApplicationListener {
         float homerSpeed = vidaHomer * 11;
         float slowBulletSpeed = -100f;
         float sideBulletSpeed = 70f;
-        float bulletSpeed = -600f;
+        float diagonalBulletSpeed = 60f;
+        float bulletSpeed = -500f;
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -334,12 +344,34 @@ public class Main implements ApplicationListener {
             if (sideBulletSprite.getX() < -sideBulletWidth) {
                 sideBulletSprites.removeIndex(i);
                 sideBulletsDerecha.removeIndex(i);
-            }
-            else if (bartRectangle.overlaps(sideBulletRectangle)) {
+            } else if (bartRectangle.overlaps(sideBulletRectangle)) {
                 bDoh.play();
                 vidaBart--;
                 sideBulletSprites.removeIndex(i);
                 sideBulletsDerecha.removeIndex(i);
+            }
+        }
+
+        for (int i = diagonalBulletSprites.size - 1; i >= 0; i--) {
+            Sprite bullet = diagonalBulletSprites.get(i);
+            boolean derecha = diagonalBulletDerecha.get(i);
+
+            bullet.translateY(-diagonalBulletSpeed * delta);
+            if (derecha)
+                bullet.translateX(-diagonalBulletSpeed * delta);
+            else
+                bullet.translateX(diagonalBulletSpeed * delta);
+
+            diagonalBulletRectangle.set(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
+
+            if (bartRectangle.overlaps(diagonalBulletRectangle)) {
+                bDoh.play();
+                vidaBart--;
+                diagonalBulletSprites.removeIndex(i);
+                diagonalBulletDerecha.removeIndex(i);
+            } else if (bullet.getY() < -bullet.getHeight()) {
+                diagonalBulletSprites.removeIndex(i);
+                diagonalBulletDerecha.removeIndex(i);
             }
         }
 
@@ -401,7 +433,15 @@ public class Main implements ApplicationListener {
         if (timerSideBullets > cooldownSideBullet) {
             createSideBullet();
             timerSideBullets = 0;
-            cooldownSideBullet = MathUtils.random(0.1f, vidaHomer/100f);
+            cooldownSideBullet = MathUtils.random(0.1f, vidaHomer / 100f);
+        }
+
+        // cooldown entre cada bala diagonal
+        timerDiagonalBullets += delta;
+        if (timerDiagonalBullets > cooldownDiagonalBullet) {
+            createDiagonalBullet();
+            timerDiagonalBullets = 0;
+            cooldownDiagonalBullet = MathUtils.random(1f, 2 * vidaHomer / 100f);
         }
     }
 
@@ -436,6 +476,10 @@ public class Main implements ApplicationListener {
             sideBulletSprite.draw(spriteBatch);
         }
 
+        for (Sprite diagonalBulletSprite : diagonalBulletSprites) {
+            diagonalBulletSprite.draw(spriteBatch);
+        }
+
         spriteBatch.end();
     }
 
@@ -465,13 +509,13 @@ public class Main implements ApplicationListener {
 
     private void createSideBullet() {
         piu.play();
-        float sideBulletWidth = 30;
-        float sideBulletHeight = 30;
+        float sideBulletWidth = 20;
+        float sideBulletHeight = 20;
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
         boolean spawnDerecha = MathUtils.randomBoolean();
-        float randomY = MathUtils.random(0f,worldHeight-sideBulletHeight);
+        float randomY = MathUtils.random(0f, worldHeight - sideBulletHeight);
 
         Sprite sideBulletSprite = new Sprite(sideBulletTexture);
         sideBulletSprite.setSize(sideBulletWidth, sideBulletHeight);
@@ -480,12 +524,35 @@ public class Main implements ApplicationListener {
         if (spawnDerecha) {
             sideBulletSprite.setPosition(worldWidth, randomY);
             sideBulletsDerecha.add(true);
-        }
-        else {
+        } else {
             sideBulletSprite.setPosition(-worldWidth, randomY);
             sideBulletsDerecha.add(false);
         }
         sideBulletSprites.add(sideBulletSprite);
+    }
+
+    private void createDiagonalBullet() {
+        piu.play();
+
+        float diagonalBulletWidth = 25;
+        float diagonalBulletHeight = 25;
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        Sprite diagonalBulletSprite = new Sprite(diagonalBulletTexture);
+        diagonalBulletSprite.setSize(diagonalBulletWidth, diagonalBulletHeight);
+
+        boolean spawnDerecha = MathUtils.randomBoolean();
+        float randomY = MathUtils.random(0f, worldHeight - diagonalBulletHeight);
+
+        if (spawnDerecha) {
+            diagonalBulletSprite.setPosition(worldWidth, randomY);
+            diagonalBulletDerecha.add(true);
+        } else {
+            diagonalBulletSprite.setPosition(-diagonalBulletWidth, randomY);
+            diagonalBulletDerecha.add(false);
+        }
+        diagonalBulletSprites.add(diagonalBulletSprite);
     }
 
     private void createRosquilla() {
