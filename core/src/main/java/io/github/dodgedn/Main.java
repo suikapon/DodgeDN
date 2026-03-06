@@ -246,7 +246,6 @@ public class Main implements ApplicationListener {
                 timerDebug = 0;
                 lastEstado = estadoBart;
                 System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
-                System.out.println("FPS: "+Gdx.graphics.getFramesPerSecond());
             }
         }
 
