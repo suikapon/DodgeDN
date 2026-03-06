@@ -162,6 +162,7 @@ public class Main implements ApplicationListener {
         // estados de bart (muerto, shifteando, vivo, poca vida...)
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
+            speed = 0;
         } else if (vidaBart == 1) {
             estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
         } else {
@@ -202,7 +203,7 @@ public class Main implements ApplicationListener {
             else
                 cooldownDisparo = 2f;
 
-            if (timerDisparo > cooldownDisparo) {
+            if (timerDisparo > cooldownDisparo && estadoBart!=EstadoBart.DEAD) {
                 createDuff();
                 timerDisparo = 0f;
             }
