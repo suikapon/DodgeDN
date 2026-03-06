@@ -76,6 +76,8 @@ public class Main implements ApplicationListener {
     float timerDiagonalBullets;
     float timerDisparo;
     float timerVidas;
+    float timerDebug;
+
     Rectangle bartRectangle;
     Rectangle homerRectangle;
     Rectangle bulletRectangle;
@@ -100,12 +102,14 @@ public class Main implements ApplicationListener {
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
-    float maxEsperaVida = 45f;
-    float alphaShift = 1f;
+    float maxEsperaVida = 20f;
+    float alphaShift = 0f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
     boolean bartHit = false;
     boolean primeraDuffDisparada = false;
+    float lastSpeed = -1f;
+    EstadoBart lastEstado = EstadoBart.DEAD;
 
     @Override
     public void create() {
@@ -192,7 +196,7 @@ public class Main implements ApplicationListener {
         cooldownBullet = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
-        cooldownVida = MathUtils.random(10f, maxEsperaVida);
+        cooldownVida = MathUtils.random(10f, maxEsperaVida*vidaBart);
     }
 
     @Override
@@ -215,27 +219,38 @@ public class Main implements ApplicationListener {
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
 
-        if (estadoBart == EstadoBart.BLUE)
-            speed *= blueMultiplier;
-
         boolean shifting = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
 
         // estados de bart (muerto, shifteando, vivo, poca vida...)
-
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
         } else if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
             estadoBart = shifting ? EstadoBart.BLUE_SHIFT : EstadoBart.BLUE;
-        else if (vidaBart == 1) {
+        else if (vidaBart == 1)
             estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
-        } else {
+        else
             estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
+
+        // aplicar multiplicadores
+        if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
+            speed *= blueMultiplier;
+        if (shifting) {
+            speed *= shiftMultiplier;
+        }
+
+        // para debug
+        if (estadoBart != lastEstado) {
+            timerDebug += delta;
+            if (timerDebug > 0.1f) {
+                timerDebug = 0;
+                lastEstado = estadoBart;
+                System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
+            }
         }
 
         // ajustar transparencia para transición. tuve que investigar cómo se hacía. es curioso lo del alpha
         if (shifting) {
-            speed *= shiftMultiplier; // aprovecho y bajo la speed al shiftear aquí también. menos código
             alphaShift += fadeSpeed * delta;
         } else
             alphaShift -= fadeSpeed * delta;
@@ -270,9 +285,7 @@ public class Main implements ApplicationListener {
                     createDuff();
                     timerDisparo = 0f;
                 }
-            }
-            else
-            {
+            } else {
                 createDuff();
                 primeraDuffDisparada = true;
                 timerDisparo = 0f;
@@ -281,6 +294,9 @@ public class Main implements ApplicationListener {
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.B))
             estadoBart = EstadoBart.BLUE;
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.N))
+            estadoBart = EstadoBart.NORMAL;
 
 
     }
@@ -524,7 +540,7 @@ public class Main implements ApplicationListener {
                 if (vidaSprites.size == 0)
                     createVida();
             timerVidas = 0;
-            cooldownVida = MathUtils.random(5f, maxEsperaVida / vidaBart);
+            cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
         }
     }
 
