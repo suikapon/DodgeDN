@@ -269,7 +269,7 @@ public class Main implements ApplicationListener {
         float sideBulletSpeed = 70f;
         float diagonalBulletSpeed = 60f;
         float bulletSpeed = -500f;
-        float powerUpSpeed = -60f;
+        float powerUpSpeed = -100f;
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -561,8 +561,8 @@ public class Main implements ApplicationListener {
         shapeRenderer.end();
     }
     private void createVida() {
-        float width = 25;
-        float height = 25;
+        float width = 50;
+        float height = 50;
         float randomX = MathUtils.random(width, viewport.getWorldWidth() - width);
         Sprite vidaSprite = new Sprite(vidaTexture);
         vidaSprite.setSize(width, height);
