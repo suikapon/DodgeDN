@@ -47,6 +47,8 @@ public class Main implements ApplicationListener {
     Texture blueChipTexture;
 
     Sound piu;
+    Sound powerup;
+    Sound vida;
     Sound bDoh;
     Sound hDoh;
     Music music;
@@ -76,6 +78,7 @@ public class Main implements ApplicationListener {
     float timerDiagonalBullets;
     float timerDisparo;
     float timerVidas;
+    float timerPowerups;
     float timerDebug;
 
     Rectangle bartRectangle;
@@ -97,19 +100,21 @@ public class Main implements ApplicationListener {
     int vidaBart = 3;
     boolean derecha = true;
     // cooldowns
+    float cooldownPowerups;
     float cooldownDuff;
     float cooldownBullet;
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
-    float maxEsperaVida = 20f;
+    float maxEsperaVida = 30f;
+    float maxEsperaCapa = 25f;
     float alphaShift = 0f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
     boolean bartHit = false;
     boolean primeraDuffDisparada = false;
-    float lastSpeed = -1f;
     EstadoBart lastEstado = EstadoBart.DEAD;
+    boolean modoDebug = false;
 
     @Override
     public void create() {
@@ -138,6 +143,8 @@ public class Main implements ApplicationListener {
         bDoh = Gdx.audio.newSound(Gdx.files.internal("bart_doh.mp3"));
         hDoh = Gdx.audio.newSound(Gdx.files.internal("homer_doh.mp3"));
         piu = Gdx.audio.newSound(Gdx.files.internal("piu.mp3"));
+        powerup = Gdx.audio.newSound(Gdx.files.internal("powerup.mp3"));
+        vida = Gdx.audio.newSound(Gdx.files.internal("vida.mp3"));
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
 
         spriteBatch = new SpriteBatch();
@@ -196,7 +203,9 @@ public class Main implements ApplicationListener {
         cooldownBullet = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
-        cooldownVida = 1f;
+        cooldownVida = -1f;
+        cooldownPowerups = MathUtils.random(10f, maxEsperaCapa * vidaBart);
+        System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
     }
 
     @Override
@@ -292,12 +301,14 @@ public class Main implements ApplicationListener {
             }
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.B))
-            estadoBart = EstadoBart.BLUE;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.G))
+            modoDebug = true;
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.N))
-            estadoBart = EstadoBart.NORMAL;
-
+        if (modoDebug) {
+            // Con la Q alternas entre powerup y normal
+            if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
+                estadoBart = estadoBart != EstadoBart.BLUE && estadoBart != EstadoBart.BLUE_SHIFT ? EstadoBart.BLUE: EstadoBart.NORMAL;
+        }
 
     }
 
@@ -353,7 +364,7 @@ public class Main implements ApplicationListener {
         if (vidaHomer <= 50 && vidaHomer > 0)
             homerSprite.setTexture(homerSemiSleepingTexture);
 
-        // balas para esquivar. gravedad. se borran al terminar
+        // balas rápidas para esquivar. gravedad. se borran al terminar (rojas)
         for (int i = bulletSprites.size - 1; i >= 0; i--) {
             Sprite bulletSprite = bulletSprites.get(i);
             float bulletWidth = bulletSprite.getWidth();
@@ -374,6 +385,7 @@ public class Main implements ApplicationListener {
             }
         }
 
+        // balas lentas (amarillas)
         for (int i = slowBulletSprites.size - 1; i >= 0; i--) {
             Sprite slowBulletSprite = slowBulletSprites.get(i);
             float slowBulletWidth = slowBulletSprite.getWidth();
@@ -394,6 +406,7 @@ public class Main implements ApplicationListener {
             }
         }
 
+        // balas dirección horizontal (verdes)
         for (int i = sideBulletSprites.size - 1; i >= 0; i--) {
             Sprite sideBulletSprite = sideBulletSprites.get(i);
             boolean derecha = sideBulletsDerecha.get(i);
@@ -415,6 +428,7 @@ public class Main implements ApplicationListener {
             }
         }
 
+        // balas dirección diagonal (moradas)
         for (int i = diagonalBulletSprites.size - 1; i >= 0; i--) {
             Sprite bullet = diagonalBulletSprites.get(i);
             boolean derecha = diagonalBulletDerecha.get(i);
@@ -435,7 +449,7 @@ public class Main implements ApplicationListener {
             }
         }
 
-        // vida
+        // vidas (icono bart)
         for (int i = vidaSprites.size - 1; i >= 0; i--) {
             Sprite vidaSprite = vidaSprites.get(i);
             float width = vidaSprite.getWidth();
@@ -448,9 +462,28 @@ public class Main implements ApplicationListener {
             if (vidaSprite.getY() < -height)
                 vidaSprites.removeIndex(i);
             else if (bartRectangle.overlaps(vidaRectangle)) {
-                // aaaaaa
+                vida.play();
                 vidaBart++;
                 vidaSprites.removeIndex(i);
+            }
+        }
+
+        // capas (icono capa), transforma en blue bart
+        for (int i = capasSprites.size - 1; i >= 0; i--) {
+            Sprite capaSprite = capasSprites.get(i);
+            float width = capaSprite.getWidth();
+            float height = capaSprite.getHeight();
+
+            capaSprite.translateY((powerUpSpeed * delta));
+
+            capaRectangle.set(capaSprite.getX(), capaSprite.getY(), width, height);
+
+            if (capaSprite.getY() < -height)
+                capasSprites.removeIndex(i);
+            else if (bartRectangle.overlaps(capaRectangle)) {
+                powerup.play();
+                estadoBart = EstadoBart.BLUE;
+                capasSprites.removeIndex(i);
             }
         }
 
@@ -533,18 +566,36 @@ public class Main implements ApplicationListener {
             cooldownDiagonalBullet = MathUtils.random(0.5f, 2 * vidaHomer / 100f);
         }
 
-        // cooldown vidas
+        /*
+        cooldown vidas
+        la vida no spawnea si hay más de una en pantalla, si tienes 3 vidas
+        o si acabas de empezar la partida. cuando recibas el primer hit podrán salir
+         */
         timerVidas += delta;
-        if (timerVidas > cooldownVida) {
+        if (timerVidas > cooldownVida && cooldownVida != -1f) {
             if (vidaBart < 3 && vidaBart > 0) {
                 if (vidaSprites.size == 0)
                     createVida();
-            }
-            else
+            } else
                 System.out.println("VIDA NO SPAWNEADA");
             timerVidas = 0;
-            cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
-            System.out.println("VIDA EN "+cooldownVida+" SEGUNDOS");
+            cooldownVida = MathUtils.random(20f, maxEsperaVida * vidaBart);
+            System.out.println("VIDA EN " + cooldownVida + " SEGUNDOS");
+        }
+
+        /*
+        cooldown capa
+        solo spawnean si no hay en pantalla y si no estás transformado
+         */
+        timerPowerups += delta;
+        if (timerPowerups > cooldownPowerups) {
+            if (capasSprites.size == 0 && estadoBart!=EstadoBart.BLUE && estadoBart!=EstadoBart.BLUE_SHIFT)
+                createCapa();
+            else
+                System.out.println("CAPA NO SPAWNEADA");
+            timerPowerups = 0;
+            cooldownPowerups = MathUtils.random(10f, maxEsperaCapa * vidaBart);
+            System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
         }
     }
 
@@ -587,6 +638,10 @@ public class Main implements ApplicationListener {
             vidaSprite.draw(spriteBatch);
         }
 
+        for (Sprite capaSprite : capasSprites) {
+            capaSprite.draw(spriteBatch);
+        }
+
         spriteBatch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
@@ -619,7 +674,7 @@ public class Main implements ApplicationListener {
         vidaBart--;
         timerVidas = 0;
         cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
-        System.out.println("VIDA EN "+cooldownVida+" SEGUNDOS");
+        System.out.println("VIDA EN " + cooldownVida + " SEGUNDOS");
         clearBullets();
     }
 
@@ -633,6 +688,18 @@ public class Main implements ApplicationListener {
         vidaSprite.setPosition(randomX, viewport.getWorldHeight());
         vidaSprites.add(vidaSprite);
         System.out.println("---------------\nVIDA SPAWNEADA\n---------------");
+    }
+
+    private void createCapa() {
+        float width = 50;
+        float height = 50;
+        float randomX = MathUtils.random(width, viewport.getWorldWidth() - width);
+        Sprite capaSprite = new Sprite(capaTexture);
+        capaSprite.setSize(width, height);
+
+        capaSprite.setPosition(randomX, viewport.getWorldHeight());
+        capasSprites.add(capaSprite);
+        System.out.println("---------------\nCAPA SPAWNEADA\n---------------");
     }
 
     private void createBullet() {
