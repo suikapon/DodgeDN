@@ -109,8 +109,8 @@ public class Main implements ApplicationListener {
         bartSprite.setPosition(worldWidth / 2 - bartSprite.getWidth(), 0);
 
         chipSprite = new Sprite(chipTexture); // la hurbox visible
-        chipSprite.setSize(bartSprite.getWidth(),bartSprite.getHeight());
-        chipSprite.setPosition(bartSprite.getX(),bartSprite.getY());
+        chipSprite.setSize(bartSprite.getWidth(), bartSprite.getHeight());
+        chipSprite.setPosition(bartSprite.getX(), bartSprite.getY());
 
         homerSprite = new Sprite(homerTexture);
         homerSprite.setSize(60, 110);
@@ -169,9 +169,9 @@ public class Main implements ApplicationListener {
         }
 
         // ajustar transparencia para transición. tuve que investigar cómo se hacía
-        if (shifting)
+        if (shifting) {
             alphaShift += fadeSpeed * delta;
-        else
+        } else
             alphaShift -= fadeSpeed * delta;
         alphaShift = MathUtils.clamp(alphaShift, 0f, 1f);
 
@@ -309,7 +309,7 @@ public class Main implements ApplicationListener {
 
 
         // hurtbox (chip)
-        chipSprite.setPosition(bartSprite.getX(),bartSprite.getY());
+        chipSprite.setPosition(bartSprite.getX(), bartSprite.getY());
         // duff (disparos)
         for (int i = duffSprites.size - 1; i >= 0; i--) {
             Sprite duffSprite = duffSprites.get(i);
@@ -360,20 +360,12 @@ public class Main implements ApplicationListener {
         // estados de bart y transiciones chip
         switch (estadoBart) {
             case NORMAL:
-                chipSprite.setTexture(chipTexture);
-                chipSprite.setAlpha(0f);
-                bartSprite.setTexture(bartTexture);
-                break;
             case SHIFT:
                 chipSprite.setTexture(chipTexture);
                 chipSprite.setAlpha(alphaShift);
                 bartSprite.setTexture(bartTexture);
                 break;
             case HURTED:
-                chipSprite.setTexture(brokenChipTexture);
-                chipSprite.setAlpha(0f);
-                bartSprite.setTexture(bartHurtedTexture);
-                break;
             case HURTED_SHIFT:
                 chipSprite.setTexture(brokenChipTexture);
                 chipSprite.setAlpha(alphaShift);
