@@ -20,7 +20,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
-enum EstadoBart {NORMAL, SHIFT, HURTED, HURTED_SHIFT, DEAD}
+enum EstadoBart {NORMAL, SHIFT, BLUE, BLUE_SHIFT, HURTED, HURTED_SHIFT, DEAD}
 
 public class Main implements ApplicationListener {
     Texture bgTexture;
@@ -44,6 +44,7 @@ public class Main implements ApplicationListener {
     Texture friendTexture;
     Texture capaTexture;
     Texture vidaTexture;
+    Texture blueChipTexture;
 
     Sound piu;
     Sound bDoh;
@@ -94,7 +95,8 @@ public class Main implements ApplicationListener {
     int vidaBart = 3;
     boolean derecha = true;
     // cooldowns
-    float cooldownDisparo;
+    float cooldownDuff;
+    float cooldownBullet;
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
@@ -103,6 +105,7 @@ public class Main implements ApplicationListener {
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
     boolean bartHit = false;
+    boolean primeraDuffDisparada = false;
 
     @Override
     public void create() {
@@ -115,6 +118,7 @@ public class Main implements ApplicationListener {
         bartHurtedShiftTexture = new Texture("bartolohurtshift.png");
         deadBart = new Texture("bartdead.png");
         chipTexture = new Texture("chip.png");
+        blueChipTexture = new Texture("bluechip.png");
         brokenChipTexture = new Texture("brokenchip.png");
         blueBartTexture = new Texture("bartoloblue.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
@@ -184,10 +188,11 @@ public class Main implements ApplicationListener {
 
         shapeRenderer = new ShapeRenderer();
 
-        cooldownDisparo = MathUtils.random(0.01f, 2f);
+        cooldownDuff = 0f;
+        cooldownBullet = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
-        cooldownVida = MathUtils.random(10f,maxEsperaVida);
+        cooldownVida = MathUtils.random(10f, maxEsperaVida);
     }
 
     @Override
@@ -203,32 +208,38 @@ public class Main implements ApplicationListener {
     }
 
     private void input() {
+        // distintos tipos de velocidades y multiplicadores dependiendo del estado (si shifteas, mitad, si eres azul, x1.5, etc...)
         float speed = 300f + (float) vidaBart * 100;
+        float shiftMultiplier = 0.5f; // mitad
+        float blueMultiplier = 1.5f; // x1.5
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
-        float cooldownDisparo;
+
+        if (estadoBart == EstadoBart.BLUE)
+            speed *= blueMultiplier;
 
         boolean shifting = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
 
         // estados de bart (muerto, shifteando, vivo, poca vida...)
+
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
-        } else if (vidaBart == 1) {
+        } else if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
+            estadoBart = shifting ? EstadoBart.BLUE_SHIFT : EstadoBart.BLUE;
+        else if (vidaBart == 1) {
             estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
         } else {
             estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
         }
 
-        // ajustar transparencia para transición. tuve que investigar cómo se hacía
+        // ajustar transparencia para transición. tuve que investigar cómo se hacía. es curioso lo del alpha
         if (shifting) {
+            speed *= shiftMultiplier; // aprovecho y bajo la speed al shiftear aquí también. menos código
             alphaShift += fadeSpeed * delta;
         } else
             alphaShift -= fadeSpeed * delta;
         alphaShift = MathUtils.clamp(alphaShift, 0f, 1f);
-
-        if (estadoBart == EstadoBart.SHIFT || estadoBart == EstadoBart.HURTED_SHIFT)
-            speed /= 2f;
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             bartSprite.setFlip(true, false);
@@ -247,24 +258,35 @@ public class Main implements ApplicationListener {
             bartSprite.translateY(-speed * delta);
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.Z)) {
-            if (vidaBart == 3)
-                cooldownDisparo = 1f;
-            else if (vidaBart == 2)
-                cooldownDisparo = 1.5f;
-            else
-                cooldownDisparo = 2f;
+            if (primeraDuffDisparada) {
+                if (vidaBart == 3)
+                    cooldownDuff = 1f;
+                else if (vidaBart == 2)
+                    cooldownDuff = 1.5f;
+                else
+                    cooldownDuff = 2f;
 
-            if (timerDisparo > cooldownDisparo && estadoBart != EstadoBart.DEAD) {
+                if (timerDisparo > cooldownDuff && estadoBart != EstadoBart.DEAD) {
+                    createDuff();
+                    timerDisparo = 0f;
+                }
+            }
+            else
+            {
                 createDuff();
+                primeraDuffDisparada = true;
                 timerDisparo = 0f;
             }
         }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.B))
+            estadoBart = EstadoBart.BLUE;
 
 
     }
 
     private void logic() {
-        float duffSpeed = 1000f+vidaBart*200;
+        float duffSpeed = 1000f + vidaBart * 200;
         float homerSpeed = vidaHomer * 11;
         float slowBulletSpeed = -100f;
         float sideBulletSpeed = 70f;
@@ -417,8 +439,7 @@ public class Main implements ApplicationListener {
         }
 
         // bart
-        if (bartHit)
-        {
+        if (bartHit) {
             takeDamage();
             bartHit = false;
         }
@@ -429,6 +450,12 @@ public class Main implements ApplicationListener {
                 chipSprite.setTexture(chipTexture);
                 chipSprite.setAlpha(alphaShift);
                 bartSprite.setTexture(bartTexture);
+                break;
+            case BLUE:
+            case BLUE_SHIFT:
+                chipSprite.setTexture(blueChipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(blueBartTexture);
                 break;
             case HURTED:
             case HURTED_SHIFT:
@@ -464,14 +491,14 @@ public class Main implements ApplicationListener {
 
         // cooldown entre cada bala, decide si es lenta (amarilla) o rápida (roja)
         timerBullets += delta;
-        if (timerBullets > cooldownDisparo) {
+        if (timerBullets > cooldownBullet) {
             boolean fast = MathUtils.randomBoolean();
             if (fast)
                 createBullet();
             else
                 createSlowBullet();
             timerBullets = 0;
-            cooldownDisparo = MathUtils.random(0.25f, vidaHomer / 100f);
+            cooldownBullet = MathUtils.random(0.25f, vidaHomer / 100f);
         }
 
         // cooldown entre cada bala horizontal
@@ -493,11 +520,11 @@ public class Main implements ApplicationListener {
         // cooldown vidas
         timerVidas += delta;
         if (timerVidas > cooldownVida) {
-            if (vidaBart<3 && vidaBart>0)
-                if (vidaSprites.size==0)
+            if (vidaBart < 3 && vidaBart > 0)
+                if (vidaSprites.size == 0)
                     createVida();
             timerVidas = 0;
-            cooldownVida = MathUtils.random(5f, maxEsperaVida/vidaBart);
+            cooldownVida = MathUtils.random(5f, maxEsperaVida / vidaBart);
         }
     }
 
@@ -546,20 +573,19 @@ public class Main implements ApplicationListener {
         float barraVidaAncho = 560f;
         float barraVidaAlto = 20f;
 
-        float porcentajeVida = vidaHomer/maxVidaHomer;
-        float anchoActual = barraVidaAncho*porcentajeVida;
+        float porcentajeVida = vidaHomer / maxVidaHomer;
+        float anchoActual = barraVidaAncho * porcentajeVida;
 
         shapeRenderer.setColor(Color.DARK_GRAY);
-        shapeRenderer.rect(20,worldHeight-35,barraVidaAncho,barraVidaAlto);
+        shapeRenderer.rect(20, worldHeight - 35, barraVidaAncho, barraVidaAlto);
 
         shapeRenderer.setColor(Color.YELLOW);
-        shapeRenderer.rect(20,worldHeight-35,anchoActual,barraVidaAlto);
+        shapeRenderer.rect(20, worldHeight - 35, anchoActual, barraVidaAlto);
 
         shapeRenderer.end();
     }
 
-    private void clearBullets()
-    {
+    private void clearBullets() {
         bulletSprites.clear();
         slowBulletSprites.clear();
         sideBulletSprites.clear();
@@ -568,12 +594,12 @@ public class Main implements ApplicationListener {
         diagonalBulletDerecha.clear();
     }
 
-    private void takeDamage()
-    {
+    private void takeDamage() {
         bDoh.play();
         vidaBart--;
         clearBullets();
     }
+
     private void createVida() {
         float width = 50;
         float height = 50;
