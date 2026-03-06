@@ -102,7 +102,7 @@ public class Main implements ApplicationListener {
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
-    float maxEsperaVida = 20f;
+    float maxEsperaVida = 40f;
     float alphaShift = 0f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
