@@ -98,7 +98,7 @@ public class Main implements ApplicationListener {
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
-    float maxEsperaVida = 30f;
+    float maxEsperaVida = 45f;
     float alphaShift = 1f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -471,7 +471,7 @@ public class Main implements ApplicationListener {
             else
                 createSlowBullet();
             timerBullets = 0;
-            cooldownDisparo = MathUtils.random(0.001f, vidaHomer / 100f);
+            cooldownDisparo = MathUtils.random(0.1f, vidaHomer / 100f);
         }
 
         // cooldown entre cada bala horizontal
@@ -479,7 +479,7 @@ public class Main implements ApplicationListener {
         if (timerSideBullets > cooldownSideBullet) {
             createSideBullet();
             timerSideBullets = 0;
-            cooldownSideBullet = MathUtils.random(0.1f, vidaHomer / 100f);
+            cooldownSideBullet = MathUtils.random(0.25f, vidaHomer / 100f);
         }
 
         // cooldown entre cada bala diagonal
@@ -487,7 +487,7 @@ public class Main implements ApplicationListener {
         if (timerDiagonalBullets > cooldownDiagonalBullet) {
             createDiagonalBullet();
             timerDiagonalBullets = 0;
-            cooldownDiagonalBullet = MathUtils.random(1f, 2 * vidaHomer / 100f);
+            cooldownDiagonalBullet = MathUtils.random(2f, 2 * vidaHomer / 100f);
         }
 
         // cooldown vidas
