@@ -102,7 +102,7 @@ public class Main implements ApplicationListener {
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
-    float maxEsperaVida = 40f;
+    float maxEsperaVida = 20f;
     float alphaShift = 0f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -196,7 +196,7 @@ public class Main implements ApplicationListener {
         cooldownBullet = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
-        cooldownVida = MathUtils.random(10f, maxEsperaVida*vidaBart);
+        cooldownVida = 1f;
     }
 
     @Override
@@ -246,6 +246,7 @@ public class Main implements ApplicationListener {
                 timerDebug = 0;
                 lastEstado = estadoBart;
                 System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
+                System.out.println("FPS: "+Gdx.graphics.getFramesPerSecond());
             }
         }
 
@@ -536,11 +537,15 @@ public class Main implements ApplicationListener {
         // cooldown vidas
         timerVidas += delta;
         if (timerVidas > cooldownVida) {
-            if (vidaBart < 3 && vidaBart > 0)
+            if (vidaBart < 3 && vidaBart > 0) {
                 if (vidaSprites.size == 0)
                     createVida();
+            }
+            else
+                System.out.println("VIDA NO SPAWNEADA");
             timerVidas = 0;
             cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
+            System.out.println("VIDA EN "+cooldownVida+" SEGUNDOS");
         }
     }
 
@@ -613,6 +618,9 @@ public class Main implements ApplicationListener {
     private void takeDamage() {
         bDoh.play();
         vidaBart--;
+        timerVidas = 0;
+        cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
+        System.out.println("VIDA EN "+cooldownVida+" SEGUNDOS");
         clearBullets();
     }
 
@@ -625,6 +633,7 @@ public class Main implements ApplicationListener {
 
         vidaSprite.setPosition(randomX, viewport.getWorldHeight());
         vidaSprites.add(vidaSprite);
+        System.out.println("---------------\nVIDA SPAWNEADA\n---------------");
     }
 
     private void createBullet() {
