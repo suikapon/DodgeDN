@@ -30,6 +30,7 @@ public class Main implements ApplicationListener {
     Texture deadBart;
     Texture bartHurtedTexture;
     Texture bulletTexture;
+    Texture sideBulletTexture;
     Texture duffTexture;
     Texture homerTexture;
     Texture homerSemiSleepingTexture;
@@ -58,19 +59,24 @@ public class Main implements ApplicationListener {
     Array<Sprite> slowBulletSprites;
     Array<Sprite> rosqSprites;
     Array<Sprite> duffSprites;
+    Array<Sprite> sideBulletSprites;
+    Array<Boolean> sideBulletsDerecha;
 
-    float timer;
+    float timerBullets;
+    float timerSideBullets;
     Rectangle bartRectangle;
     Rectangle homerRectangle;
     Rectangle bulletRectangle;
     Rectangle rosqRectangle;
     Rectangle duffRectangle;
     Rectangle slowBulletRectangle;
+    Rectangle sideBulletRectangle;
     float timerDisparo;
     float vidaHomer = 100f;
     int vidaBart = 3;
     boolean derecha = true;
     float cooldownDisparo;
+    float cooldownSideBullet;
     float alphaShift = 1f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -88,6 +94,7 @@ public class Main implements ApplicationListener {
         bartHurtedTexture = new Texture("bartolohurt.png");
         bulletTexture = new Texture("bullet.png");
         slowBulletTexture = new Texture("slowbullet.png");
+        sideBulletTexture = new Texture("sideBullet.png");
         duffTexture = new Texture("duff.png");
         homerTexture = new Texture("homer.png");
         homerSemiSleepingTexture = new Texture("homeralmsleep.png");
@@ -122,6 +129,8 @@ public class Main implements ApplicationListener {
         rosqSprites = new Array<>();
         duffSprites = new Array<>();
         slowBulletSprites = new Array<>();
+        sideBulletSprites = new Array<>();
+        sideBulletsDerecha = new Array<>();
 
         bartRectangle = new Rectangle();
         homerRectangle = new Rectangle();
@@ -129,6 +138,7 @@ public class Main implements ApplicationListener {
         duffRectangle = new Rectangle();
         rosqRectangle = new Rectangle();
         slowBulletRectangle = new Rectangle();
+        sideBulletRectangle = new Rectangle();
 
         bDoh.setVolume(0, 0.5f);
 
@@ -137,6 +147,7 @@ public class Main implements ApplicationListener {
         music.play();
 
         cooldownDisparo = MathUtils.random(0.01f, 2f);
+        cooldownSideBullet = MathUtils.random(1f,2f);
     }
 
     @Override
@@ -216,6 +227,7 @@ public class Main implements ApplicationListener {
         float duffSpeed = 1500f;
         float homerSpeed = vidaHomer * 11;
         float slowBulletSpeed = -100f;
+        float sideBulletSpeed = 70f;
         float bulletSpeed = -600f;
 
         float worldWidth = viewport.getWorldWidth();
@@ -306,6 +318,31 @@ public class Main implements ApplicationListener {
             }
         }
 
+        for (int i = sideBulletSprites.size - 1; i >= 0; i--) {
+            Sprite sideBulletSprite = sideBulletSprites.get(i);
+            boolean derecha = sideBulletsDerecha.get(i);
+            float sideBulletWidth = sideBulletSprite.getWidth();
+            float sideBulletHeight = sideBulletSprite.getHeight();
+
+            if (derecha)
+                sideBulletSprite.translateX((-sideBulletSpeed * delta));
+            else
+                sideBulletSprite.translateX((sideBulletSpeed * delta));
+
+            sideBulletRectangle.set(sideBulletSprite.getX(), sideBulletSprite.getY(), sideBulletWidth, sideBulletHeight);
+
+            if (sideBulletSprite.getX() < -sideBulletWidth) {
+                sideBulletSprites.removeIndex(i);
+                sideBulletsDerecha.removeIndex(i);
+            }
+            else if (bartRectangle.overlaps(sideBulletRectangle)) {
+                bDoh.play();
+                vidaBart--;
+                sideBulletSprites.removeIndex(i);
+                sideBulletsDerecha.removeIndex(i);
+            }
+        }
+
         // bart
         // estados de bart y transiciones chip
         switch (estadoBart) {
@@ -347,18 +384,25 @@ public class Main implements ApplicationListener {
             }
         }
 
-        // cooldown entre cada bala, decide si es lenta o rápida
-        timer += delta;
-        if (timer > cooldownDisparo) {
+        // cooldown entre cada bala, decide si es lenta (amarilla) o rápida (roja)
+        timerBullets += delta;
+        if (timerBullets > cooldownDisparo) {
             boolean fast = MathUtils.randomBoolean();
             if (fast)
                 createBullet();
             else
                 createSlowBullet();
-            timer = 0;
+            timerBullets = 0;
             cooldownDisparo = MathUtils.random(0.001f, vidaHomer / 100f);
         }
 
+        // cooldown entre cada bala horizontal
+        timerSideBullets += delta;
+        if (timerSideBullets > cooldownSideBullet) {
+            createSideBullet();
+            timerSideBullets = 0;
+            cooldownSideBullet = MathUtils.random(0.1f, vidaHomer/100f);
+        }
     }
 
     private void draw() {
@@ -388,6 +432,10 @@ public class Main implements ApplicationListener {
             duffSprite.draw(spriteBatch);
         }
 
+        for (Sprite sideBulletSprite : sideBulletSprites) {
+            sideBulletSprite.draw(spriteBatch);
+        }
+
         spriteBatch.end();
     }
 
@@ -413,6 +461,31 @@ public class Main implements ApplicationListener {
 
         slowBulletSprite.setPosition(homerSprite.getX(), homerSprite.getY());
         slowBulletSprites.add(slowBulletSprite);
+    }
+
+    private void createSideBullet() {
+        piu.play();
+        float sideBulletWidth = 30;
+        float sideBulletHeight = 30;
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        boolean spawnDerecha = MathUtils.randomBoolean();
+        float randomY = MathUtils.random(0f,worldHeight-sideBulletHeight);
+
+        Sprite sideBulletSprite = new Sprite(sideBulletTexture);
+        sideBulletSprite.setSize(sideBulletWidth, sideBulletHeight);
+
+        // si spawnea a la derecha la creamos en un punto aleatorio de Y
+        if (spawnDerecha) {
+            sideBulletSprite.setPosition(worldWidth, randomY);
+            sideBulletsDerecha.add(true);
+        }
+        else {
+            sideBulletSprite.setPosition(-worldWidth, randomY);
+            sideBulletsDerecha.add(false);
+        }
+        sideBulletSprites.add(sideBulletSprite);
     }
 
     private void createRosquilla() {
