@@ -74,6 +74,7 @@ public class Main implements ApplicationListener {
     float timerSideBullets;
     float timerDiagonalBullets;
     float timerDisparo;
+    float timerVidas;
     Rectangle bartRectangle;
     Rectangle homerRectangle;
     Rectangle bulletRectangle;
@@ -92,9 +93,12 @@ public class Main implements ApplicationListener {
 
     int vidaBart = 3;
     boolean derecha = true;
+    // cooldowns
     float cooldownDisparo;
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
+    float cooldownVida;
+    float maxEsperaVida = 30f;
     float alphaShift = 1f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -182,6 +186,7 @@ public class Main implements ApplicationListener {
         cooldownDisparo = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
+        cooldownVida = MathUtils.random(10f,maxEsperaVida);
     }
 
     @Override
@@ -264,6 +269,7 @@ public class Main implements ApplicationListener {
         float sideBulletSpeed = 70f;
         float diagonalBulletSpeed = 60f;
         float bulletSpeed = -500f;
+        float powerUpSpeed = -60f;
 
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
@@ -400,6 +406,25 @@ public class Main implements ApplicationListener {
             }
         }
 
+        // vida
+        for (int i = vidaSprites.size - 1; i >= 0; i--) {
+            Sprite vidaSprite = vidaSprites.get(i);
+            float width = vidaSprite.getWidth();
+            float height = vidaSprite.getHeight();
+
+            vidaSprite.translateY((powerUpSpeed * delta));
+
+            vidaRectangle.set(vidaSprite.getX(), vidaSprite.getY(), width, height);
+
+            if (vidaSprite.getY() < -height)
+                vidaSprites.removeIndex(i);
+            else if (bartRectangle.overlaps(vidaRectangle)) {
+                // aaaaaa
+                vidaBart++;
+                vidaSprites.removeIndex(i);
+            }
+        }
+
         // bart
         // estados de bart y transiciones chip
         switch (estadoBart) {
@@ -468,6 +493,15 @@ public class Main implements ApplicationListener {
             timerDiagonalBullets = 0;
             cooldownDiagonalBullet = MathUtils.random(1f, 2 * vidaHomer / 100f);
         }
+
+        // cooldown vidas
+        timerVidas += delta;
+        if (timerVidas > cooldownVida) {
+            if (vidaBart<3 && vidaBart>0)
+                createVida();
+            timerVidas = 0;
+            cooldownVida = MathUtils.random(1f, maxEsperaVida/vidaBart);
+        }
     }
 
     private void draw() {
@@ -505,6 +539,10 @@ public class Main implements ApplicationListener {
             diagonalBulletSprite.draw(spriteBatch);
         }
 
+        for (Sprite vidaSprite : vidaSprites) {
+            vidaSprite.draw(spriteBatch);
+        }
+
         spriteBatch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
@@ -521,6 +559,16 @@ public class Main implements ApplicationListener {
         shapeRenderer.rect(20,worldHeight-35,anchoActual,barraVidaAlto);
 
         shapeRenderer.end();
+    }
+    private void createVida() {
+        float width = 25;
+        float height = 25;
+        float randomX = MathUtils.random(width, viewport.getWorldWidth() - width);
+        Sprite vidaSprite = new Sprite(vidaTexture);
+        vidaSprite.setSize(width, height);
+
+        vidaSprite.setPosition(randomX, viewport.getWorldHeight());
+        vidaSprites.add(vidaSprite);
     }
 
     private void createBullet() {
