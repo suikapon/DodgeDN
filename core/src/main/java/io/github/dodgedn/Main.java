@@ -306,7 +306,25 @@ public class Main implements ApplicationListener {
         }
 
         // bart
-
+        // estados de bart y transiciones chip
+        switch (estadoBart) {
+            case NORMAL:
+            case SHIFT:
+                chipSprite.setTexture(chipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(bartTexture);
+                break;
+            case HURTED:
+            case HURTED_SHIFT:
+                chipSprite.setTexture(brokenChipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(bartHurtedTexture);
+                break;
+            case DEAD:
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(deadBart);
+                break;
+        }
 
         // hurtbox (chip)
         chipSprite.setPosition(bartSprite.getX(), bartSprite.getY());
@@ -356,26 +374,6 @@ public class Main implements ApplicationListener {
         bartSprite.setAlpha(1f);
         homerSprite.draw(spriteBatch);
         chipSprite.draw(spriteBatch);
-
-        // estados de bart y transiciones chip
-        switch (estadoBart) {
-            case NORMAL:
-            case SHIFT:
-                chipSprite.setTexture(chipTexture);
-                chipSprite.setAlpha(alphaShift);
-                bartSprite.setTexture(bartTexture);
-                break;
-            case HURTED:
-            case HURTED_SHIFT:
-                chipSprite.setTexture(brokenChipTexture);
-                chipSprite.setAlpha(alphaShift);
-                bartSprite.setTexture(bartHurtedTexture);
-                break;
-            case DEAD:
-                chipSprite.setAlpha(alphaShift);
-                bartSprite.setTexture(deadBart);
-                break;
-        }
 
         for (Sprite bulletSprite : bulletSprites) {
             bulletSprite.draw(spriteBatch);
