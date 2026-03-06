@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -75,7 +76,11 @@ public class Main implements ApplicationListener {
     Rectangle slowBulletRectangle;
     Rectangle sideBulletRectangle;
     Rectangle diagonalBulletRectangle;
+
+    ShapeRenderer shapeRenderer;
+    float maxVidaHomer = 100f;
     float vidaHomer = 100f;
+
     int vidaBart = 3;
     boolean derecha = true;
     float cooldownDisparo;
@@ -153,6 +158,8 @@ public class Main implements ApplicationListener {
         music.setLooping(true);
         music.setVolume(0.2f);
         music.play();
+
+        shapeRenderer = new ShapeRenderer();
 
         cooldownDisparo = MathUtils.random(0.01f, 2f);
         cooldownSideBullet = MathUtils.random(1f, 2f);
@@ -233,7 +240,7 @@ public class Main implements ApplicationListener {
     }
 
     private void logic() {
-        float duffSpeed = 1500f;
+        float duffSpeed = 1000f+vidaBart*200;
         float homerSpeed = vidaHomer * 11;
         float slowBulletSpeed = -100f;
         float sideBulletSpeed = 70f;
@@ -481,6 +488,21 @@ public class Main implements ApplicationListener {
         }
 
         spriteBatch.end();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        float barraVidaAncho = 560f;
+        float barraVidaAlto = 20f;
+
+        float porcentajeVida = vidaHomer/maxVidaHomer;
+        float anchoActual = barraVidaAncho*porcentajeVida;
+
+        shapeRenderer.setColor(Color.DARK_GRAY);
+        shapeRenderer.rect(20,worldHeight-35,barraVidaAncho,barraVidaAlto);
+
+        shapeRenderer.setColor(Color.YELLOW);
+        shapeRenderer.rect(20,worldHeight-35,anchoActual,barraVidaAlto);
+
+        shapeRenderer.end();
     }
 
     private void createBullet() {
@@ -508,7 +530,6 @@ public class Main implements ApplicationListener {
     }
 
     private void createSideBullet() {
-        piu.play();
         float sideBulletWidth = 20;
         float sideBulletHeight = 20;
         float worldWidth = viewport.getWorldWidth();
@@ -532,8 +553,6 @@ public class Main implements ApplicationListener {
     }
 
     private void createDiagonalBullet() {
-        piu.play();
-
         float diagonalBulletWidth = 25;
         float diagonalBulletHeight = 25;
         float worldWidth = viewport.getWorldWidth();
