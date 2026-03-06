@@ -102,6 +102,7 @@ public class Main implements ApplicationListener {
     float alphaShift = 1f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
+    boolean bartHit = false;
 
     @Override
     public void create() {
@@ -331,9 +332,7 @@ public class Main implements ApplicationListener {
             if (bulletSprite.getY() < -bulletHeight)
                 bulletSprites.removeIndex(i);
             else if (bartRectangle.overlaps(bulletRectangle)) {
-                bDoh.play();
-                vidaBart--;
-                bulletSprites.removeIndex(i);
+                bartHit = true;
             }
         }
 
@@ -353,9 +352,7 @@ public class Main implements ApplicationListener {
             if (slowBulletSprite.getY() < -slowBulletHeight)
                 slowBulletSprites.removeIndex(i);
             else if (bartRectangle.overlaps(slowBulletRectangle)) {
-                bDoh.play();
-                vidaBart--;
-                slowBulletSprites.removeIndex(i);
+                bartHit = true;
             }
         }
 
@@ -376,10 +373,7 @@ public class Main implements ApplicationListener {
                 sideBulletSprites.removeIndex(i);
                 sideBulletsDerecha.removeIndex(i);
             } else if (bartRectangle.overlaps(sideBulletRectangle)) {
-                bDoh.play();
-                vidaBart--;
-                sideBulletSprites.removeIndex(i);
-                sideBulletsDerecha.removeIndex(i);
+                bartHit = true;
             }
         }
 
@@ -396,10 +390,7 @@ public class Main implements ApplicationListener {
             diagonalBulletRectangle.set(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
 
             if (bartRectangle.overlaps(diagonalBulletRectangle)) {
-                bDoh.play();
-                vidaBart--;
-                diagonalBulletSprites.removeIndex(i);
-                diagonalBulletDerecha.removeIndex(i);
+                bartHit = true;
             } else if (bullet.getY() < -bullet.getHeight()) {
                 diagonalBulletSprites.removeIndex(i);
                 diagonalBulletDerecha.removeIndex(i);
@@ -426,6 +417,7 @@ public class Main implements ApplicationListener {
         }
 
         // bart
+
         // estados de bart y transiciones chip
         switch (estadoBart) {
             case NORMAL:
@@ -502,6 +494,12 @@ public class Main implements ApplicationListener {
             timerVidas = 0;
             cooldownVida = MathUtils.random(1f, maxEsperaVida/vidaBart);
         }
+
+        if (bartHit)
+        {
+            takeDamage();
+            bartHit = false;
+        }
     }
 
     private void draw() {
@@ -559,6 +557,23 @@ public class Main implements ApplicationListener {
         shapeRenderer.rect(20,worldHeight-35,anchoActual,barraVidaAlto);
 
         shapeRenderer.end();
+    }
+
+    private void clearBullets()
+    {
+        bulletSprites.clear();
+        slowBulletSprites.clear();
+        sideBulletSprites.clear();
+        sideBulletsDerecha.clear();
+        diagonalBulletSprites.clear();
+        diagonalBulletDerecha.clear();
+    }
+
+    private void takeDamage()
+    {
+        bDoh.play();
+        vidaBart--;
+        clearBullets();
     }
     private void createVida() {
         float width = 50;
