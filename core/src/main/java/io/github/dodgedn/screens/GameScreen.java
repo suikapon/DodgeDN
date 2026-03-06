@@ -82,6 +82,7 @@ public class GameScreen implements Screen {
     float timerVidas;
     float timerPowerups;
     float timerDebug;
+    float timerMuerte = 0;
 
     Rectangle bartRectangle;
     Rectangle homerRectangle;
@@ -118,6 +119,7 @@ public class GameScreen implements Screen {
     boolean primeraDuffDisparada = false;
     EstadoBart lastEstado = EstadoBart.DEAD;
     boolean modoDebug = false;
+    boolean changeScreen = false;
     // multiplicadores de bart
     float shiftMultiplier = 0.5f; // mitad
     float blueMultiplier = 1.5f; // x1.5
@@ -228,6 +230,11 @@ public class GameScreen implements Screen {
         input();
         logic();
         draw();
+
+        if (changeScreen) {
+            dispose();
+            game.setScreen(new MainMenuScreen(game));
+        }
     }
 
     private void input() {
@@ -241,6 +248,9 @@ public class GameScreen implements Screen {
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
+            timerMuerte+=delta;
+            if (timerMuerte>=1f)
+                changeScreen = true;
         } else {
             if (isBlue()) {
                 if (vidaBart == 1)
@@ -258,16 +268,6 @@ public class GameScreen implements Screen {
             speed *= blueMultiplier;
         if (shifting) {
             speed *= shiftMultiplier;
-        }
-
-        // para debug
-        if (estadoBart != lastEstado) {
-            timerDebug += delta;
-            if (timerDebug > 0.1f) {
-                timerDebug = 0;
-                lastEstado = estadoBart;
-                System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
-            }
         }
 
         // ajustar transparencia para transición. tuve que investigar cómo se hacía. es curioso lo del alpha
@@ -317,6 +317,15 @@ public class GameScreen implements Screen {
             modoDebug = true;
 
         if (modoDebug) {
+            // para debug
+            if (estadoBart != lastEstado) {
+                timerDebug += delta;
+                if (timerDebug > 0.1f) {
+                    timerDebug = 0;
+                    lastEstado = estadoBart;
+                    System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
+                }
+            }
             // Con la Q alternas entre powerup y normal
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
                 estadoBart = isBlue() ? EstadoBart.NORMAL : EstadoBart.BLUE;
