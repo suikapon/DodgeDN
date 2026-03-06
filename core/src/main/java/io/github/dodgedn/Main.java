@@ -21,6 +21,8 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
+enum EstadoBart {NORMAL, SHIFT, HURTED, HURTED_SHIFT, DEAD}
+
 public class Main implements ApplicationListener {
     Texture bgTexture;
     Texture bartTexture;
@@ -35,6 +37,8 @@ public class Main implements ApplicationListener {
     Texture rosquillaTexture;
     Texture slowBulletTexture;
     Texture bartShiftTexture;
+    Texture chipTexture;
+    Texture brokenChipTexture;
     Texture bartHurtedShiftTexture;
 
     Sound piu;
@@ -46,6 +50,7 @@ public class Main implements ApplicationListener {
     FitViewport viewport;
 
     Sprite bartSprite;
+    Sprite chipSprite;
     Sprite homerSprite;
 
     Vector2 touchPos;
@@ -65,16 +70,20 @@ public class Main implements ApplicationListener {
     float vidaHomer = 100f;
     int vidaBart = 3;
     boolean derecha = true;
-
     float cooldownDisparo;
+    float alphaShift = 1f;
+    float fadeSpeed = 3f;
+    EstadoBart estadoBart = EstadoBart.NORMAL;
 
     @Override
     public void create() {
         bgTexture = new Texture("bg2.png");
         bartTexture = new Texture("bartolo.png");
         bartShiftTexture = new Texture("bartoloshift.png");
-        bartHurtedTexture = new Texture("bartolohurtshift.png");
+        bartHurtedShiftTexture = new Texture("bartolohurtshift.png");
         deadBart = new Texture("bartdead.png");
+        chipTexture = new Texture("chip.png");
+        brokenChipTexture = new Texture("brokenchip.png");
         blueBartTexture = new Texture("bartoloblue.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
         bulletTexture = new Texture("bullet.png");
@@ -99,6 +108,10 @@ public class Main implements ApplicationListener {
         bartSprite.setSize(40, 90);
         bartSprite.setPosition(worldWidth / 2 - bartSprite.getWidth(), 0);
 
+        chipSprite = new Sprite(chipTexture); // la hurbox visible
+        chipSprite.setSize(bartSprite.getWidth(),bartSprite.getHeight());
+        chipSprite.setPosition(bartSprite.getX(),bartSprite.getY());
+
         homerSprite = new Sprite(homerTexture);
         homerSprite.setSize(60, 110);
         homerSprite.setPosition(worldWidth / 2 - homerSprite.getWidth(), worldHeight - 100 - homerSprite.getHeight());
@@ -117,7 +130,7 @@ public class Main implements ApplicationListener {
         rosqRectangle = new Rectangle();
         slowBulletRectangle = new Rectangle();
 
-        bDoh.setVolume(0,0.5f);
+        bDoh.setVolume(0, 0.5f);
 
         music.setLooping(true);
         music.setVolume(0.2f);
@@ -139,22 +152,31 @@ public class Main implements ApplicationListener {
     }
 
     private void input() {
-        float speed = 300f+ (float) vidaBart*100;
+        float speed = 300f + (float) vidaBart * 100;
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
         float cooldownDisparo;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT))
-        {
-            if (vidaBart>1)
-                bartSprite.setTexture(bartShiftTexture);
-            else
-                bartSprite.setTexture(bartHurtedShiftTexture);
-            speed = speed / 2f;
-        } else if (vidaBart>1)
-            bartSprite.setTexture(bartTexture);
+        boolean shifting = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
+
+        // estados de bart (muerto, shifteando, vivo, poca vida...)
+        if (vidaBart <= 0) {
+            estadoBart = EstadoBart.DEAD;
+        } else if (vidaBart == 1) {
+            estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
+        } else {
+            estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
+        }
+
+        // ajustar transparencia para transición. tuve que investigar cómo se hacía
+        if (shifting)
+            alphaShift += fadeSpeed * delta;
         else
-            bartSprite.setTexture(bartHurtedTexture);
+            alphaShift -= fadeSpeed * delta;
+        alphaShift = MathUtils.clamp(alphaShift, 0f, 1f);
+
+        if (estadoBart == EstadoBart.SHIFT || estadoBart == EstadoBart.HURTED_SHIFT)
+            speed /= 2f;
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             bartSprite.setFlip(true, false);
@@ -172,11 +194,10 @@ public class Main implements ApplicationListener {
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN))
             bartSprite.translateY(-speed * delta);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.Z))
-        {
-            if (vidaBart==3)
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Z)) {
+            if (vidaBart == 3)
                 cooldownDisparo = 1f;
-            else if (vidaBart==2)
+            else if (vidaBart == 2)
                 cooldownDisparo = 1.5f;
             else
                 cooldownDisparo = 2f;
@@ -192,7 +213,7 @@ public class Main implements ApplicationListener {
 
     private void logic() {
         float duffSpeed = 1500f;
-        float homerSpeed = vidaHomer*11;
+        float homerSpeed = vidaHomer * 11;
         float slowBulletSpeed = -100f;
         float bulletSpeed = -600f;
 
@@ -232,12 +253,11 @@ public class Main implements ApplicationListener {
                     derecha = true;
                 }
             }
-        } else
-        {
+        } else {
             homerSprite.setTexture(homerSleepingTexture);
         }
 
-        if (vidaHomer<=50 && vidaHomer>0)
+        if (vidaHomer <= 50 && vidaHomer > 0)
             homerSprite.setTexture(homerSemiSleepingTexture);
 
         // balas para esquivar. gravedad. se borran al terminar
@@ -246,8 +266,8 @@ public class Main implements ApplicationListener {
             float bulletWidth = bulletSprite.getWidth();
             float bulletHeight = bulletSprite.getHeight();
 
-            if (bulletSprite.getY()>=500)
-                bulletSprite.translateY((bulletSpeed *4* delta));
+            if (bulletSprite.getY() >= 500)
+                bulletSprite.translateY((bulletSpeed * 4 * delta));
             else
                 bulletSprite.translateY((bulletSpeed * delta));
 
@@ -269,7 +289,7 @@ public class Main implements ApplicationListener {
             float slowBulletHeight = slowBulletSprite.getHeight();
 
             // empieza rápido, termina lento
-            if (slowBulletSprite.getY()>=500)
+            if (slowBulletSprite.getY() >= 500)
                 slowBulletSprite.translateY((slowBulletSpeed * 2 * delta));
             else
                 slowBulletSprite.translateY((slowBulletSpeed * delta));
@@ -286,11 +306,10 @@ public class Main implements ApplicationListener {
         }
 
         // bart
-        if (vidaBart==1)
-            bartSprite.setTexture(bartHurtedTexture);
-        if (vidaBart<=0)
-            bartSprite.setTexture(deadBart);
 
+
+        // hurtbox (chip)
+        chipSprite.setPosition(bartSprite.getX(),bartSprite.getY());
         // duff (disparos)
         for (int i = duffSprites.size - 1; i >= 0; i--) {
             Sprite duffSprite = duffSprites.get(i);
@@ -304,7 +323,7 @@ public class Main implements ApplicationListener {
                 duffSprites.removeIndex(i);
             else if (homerRectangle.overlaps(duffRectangle)) {
                 hDoh.play();
-                vidaHomer-=5;
+                vidaHomer -= 5;
                 duffSprites.removeIndex(i);
             }
         }
@@ -318,7 +337,7 @@ public class Main implements ApplicationListener {
             else
                 createSlowBullet();
             timer = 0;
-            cooldownDisparo = MathUtils.random(0.001f, vidaHomer/100f);
+            cooldownDisparo = MathUtils.random(0.001f, vidaHomer / 100f);
         }
 
     }
@@ -334,7 +353,37 @@ public class Main implements ApplicationListener {
 
         spriteBatch.draw(bgTexture, 0, 0, worldWidth, worldHeight); // fondo
         bartSprite.draw(spriteBatch);
+        bartSprite.setAlpha(1f);
         homerSprite.draw(spriteBatch);
+        chipSprite.draw(spriteBatch);
+
+        // estados de bart y transiciones chip
+        switch (estadoBart) {
+            case NORMAL:
+                chipSprite.setTexture(chipTexture);
+                chipSprite.setAlpha(0f);
+                bartSprite.setTexture(bartTexture);
+                break;
+            case SHIFT:
+                chipSprite.setTexture(chipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(bartTexture);
+                break;
+            case HURTED:
+                chipSprite.setTexture(brokenChipTexture);
+                chipSprite.setAlpha(0f);
+                bartSprite.setTexture(bartHurtedTexture);
+                break;
+            case HURTED_SHIFT:
+                chipSprite.setTexture(brokenChipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(bartHurtedTexture);
+                break;
+            case DEAD:
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(deadBart);
+                break;
+        }
 
         for (Sprite bulletSprite : bulletSprites) {
             bulletSprite.draw(spriteBatch);
@@ -375,8 +424,7 @@ public class Main implements ApplicationListener {
         slowBulletSprites.add(slowBulletSprite);
     }
 
-    private void createRosquilla()
-    {
+    private void createRosquilla() {
         float rosqWidth = 25;
         float rosqHeight = 25;
         float worldWidth = viewport.getWorldWidth();
@@ -389,8 +437,7 @@ public class Main implements ApplicationListener {
         rosqSprites.add(rosqSprite);
     }
 
-    private void createDuff()
-    {
+    private void createDuff() {
         float duffWidth = 30;
         float duffHeight = 50;
 
