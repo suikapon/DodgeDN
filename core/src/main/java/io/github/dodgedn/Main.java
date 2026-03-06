@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -33,6 +34,8 @@ public class Main implements ApplicationListener {
     Texture homerSleepingTexture;
     Texture rosquillaTexture;
     Texture slowBulletTexture;
+    Texture bartShiftTexture;
+    Texture bartHurtedShiftTexture;
 
     Sound piu;
     Sound bDoh;
@@ -69,6 +72,8 @@ public class Main implements ApplicationListener {
     public void create() {
         bgTexture = new Texture("bg2.png");
         bartTexture = new Texture("bartolo.png");
+        bartShiftTexture = new Texture("bartoloshift.png");
+        bartHurtedTexture = new Texture("bartolohurtshift.png");
         deadBart = new Texture("bartdead.png");
         blueBartTexture = new Texture("bartoloblue.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
@@ -140,7 +145,16 @@ public class Main implements ApplicationListener {
         float cooldownDisparo;
 
         if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT))
+        {
+            if (vidaBart>1)
+                bartSprite.setTexture(bartShiftTexture);
+            else
+                bartSprite.setTexture(bartHurtedShiftTexture);
             speed = speed / 2f;
+        } else if (vidaBart>1)
+            bartSprite.setTexture(bartTexture);
+        else
+            bartSprite.setTexture(bartHurtedTexture);
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             bartSprite.setFlip(true, false);
@@ -197,8 +211,12 @@ public class Main implements ApplicationListener {
 
         float delta = Gdx.graphics.getDeltaTime(); // para lo de los fps
 
-        // hurtbox bart, más pequeña que el sprite, como se suele hacer en juegos de esquivar
-        bartRectangle.set(bartSprite.getX(), bartSprite.getY(), (float) (bartWidth/1.3), (float) (bartHeight/1.3));
+        // hurtbox bart, más pequeña que el sprite, como se suele hacer en juegos de esquivar. cálculo buscado porque no sabía centrarla
+        float hurtWidth = bartWidth / 3f;
+        float hurtHeight = bartHeight / 2.5f;
+        float offsetX = (bartWidth - hurtWidth) / 2f;
+        float offsetY = (bartHeight - hurtHeight) / 1.5f;
+        bartRectangle.set(bartSprite.getX() + offsetX, bartSprite.getY() + offsetY, hurtWidth, hurtHeight);
         homerRectangle.set(homerSprite.getX(), homerSprite.getY(), homerSprite.getWidth(), homerSprite.getHeight());
 
         // lógica movimiento homer
@@ -229,7 +247,7 @@ public class Main implements ApplicationListener {
             float bulletHeight = bulletSprite.getHeight();
 
             if (bulletSprite.getY()>=500)
-                bulletSprite.translateY((bulletSpeed *2* delta));
+                bulletSprite.translateY((bulletSpeed *4* delta));
             else
                 bulletSprite.translateY((bulletSpeed * delta));
 
