@@ -1,4 +1,4 @@
-package io.github.dodgedn;
+package io.github.dodgedn._old;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
@@ -17,12 +17,11 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
-/**
- * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
- */
-enum EstadoBart {NORMAL, SHIFT, BLUE, BLUE_SHIFT, HURTED, HURTED_SHIFT, BLUE_HURTED, BLUE_HURTED_SHIFT, DEAD}
+import io.github.dodgedn.estados.EstadoBart;
 
-public class Main implements ApplicationListener {
+
+// SE DEBERÍA BORRAR, PERO LO DEJO PARA REVISAR
+public class oldMain implements ApplicationListener {
     Texture bgTexture;
     Texture bartTexture;
     Texture blueBartTexture;
@@ -250,8 +249,6 @@ public class Main implements ApplicationListener {
             else
                 estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
         }
-
-        // a
 
         // aplicar multiplicadores
         if (isBlue())
