@@ -20,7 +20,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
-enum EstadoBart {NORMAL, SHIFT, BLUE, BLUE_SHIFT, HURTED, HURTED_SHIFT, DEAD}
+enum EstadoBart {NORMAL, SHIFT, BLUE, BLUE_SHIFT, HURTED, HURTED_SHIFT, BLUE_HURTED, BLUE_HURTED_SHIFT, DEAD}
 
 public class Main implements ApplicationListener {
     Texture bgTexture;
@@ -45,6 +45,8 @@ public class Main implements ApplicationListener {
     Texture capaTexture;
     Texture vidaTexture;
     Texture blueChipTexture;
+    Texture blueBurtHurtTexture;
+    Texture brokenBlueChipTexture;
 
     Sound piu;
     Sound powerup;
@@ -98,6 +100,7 @@ public class Main implements ApplicationListener {
     float vidaHomer = 100f;
 
     int vidaBart = 3;
+    int maxVidaBart = 3;
     boolean derecha = true;
     // cooldowns
     float cooldownPowerups;
@@ -115,6 +118,9 @@ public class Main implements ApplicationListener {
     boolean primeraDuffDisparada = false;
     EstadoBart lastEstado = EstadoBart.DEAD;
     boolean modoDebug = false;
+    // multiplicadores de bart
+    float shiftMultiplier = 0.5f; // mitad
+    float blueMultiplier = 1.5f; // x1.5
 
     @Override
     public void create() {
@@ -128,8 +134,10 @@ public class Main implements ApplicationListener {
         deadBart = new Texture("bartdead.png");
         chipTexture = new Texture("chip.png");
         blueChipTexture = new Texture("bluechip.png");
+        brokenBlueChipTexture = new Texture("brokenbluechip.png");
         brokenChipTexture = new Texture("brokenchip.png");
         blueBartTexture = new Texture("bartoloblue.png");
+        blueBurtHurtTexture = new Texture("bartolobluehurt.png");
         bartHurtedTexture = new Texture("bartolohurt.png");
         bulletTexture = new Texture("bullet.png");
         slowBulletTexture = new Texture("slowbullet.png");
@@ -221,10 +229,7 @@ public class Main implements ApplicationListener {
     }
 
     private void input() {
-        // distintos tipos de velocidades y multiplicadores dependiendo del estado (si shifteas, mitad, si eres azul, x1.5, etc...)
         float speed = 300f + (float) vidaBart * 100;
-        float shiftMultiplier = 0.5f; // mitad
-        float blueMultiplier = 1.5f; // x1.5
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
 
@@ -234,15 +239,20 @@ public class Main implements ApplicationListener {
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
-        } else if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
-            estadoBart = shifting ? EstadoBart.BLUE_SHIFT : EstadoBart.BLUE;
-        else if (vidaBart == 1)
-            estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
-        else
-            estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
+        } else {
+            if (isBlue()) {
+                if (vidaBart == 1)
+                    estadoBart = shifting ? EstadoBart.BLUE_HURTED_SHIFT : EstadoBart.BLUE_HURTED;
+                else
+                    estadoBart = shifting ? EstadoBart.BLUE_SHIFT : EstadoBart.BLUE;
+            } else if (vidaBart == 1)
+                estadoBart = shifting ? EstadoBart.HURTED_SHIFT : EstadoBart.HURTED;
+            else
+                estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
+        }
 
         // aplicar multiplicadores
-        if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
+        if (isBlue())
             speed *= blueMultiplier;
         if (shifting) {
             speed *= shiftMultiplier;
@@ -307,7 +317,7 @@ public class Main implements ApplicationListener {
         if (modoDebug) {
             // Con la Q alternas entre powerup y normal
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
-                estadoBart = estadoBart != EstadoBart.BLUE && estadoBart != EstadoBart.BLUE_SHIFT ? EstadoBart.BLUE: EstadoBart.NORMAL;
+                estadoBart = isBlue() ? EstadoBart.NORMAL : EstadoBart.BLUE;
         }
 
     }
@@ -512,6 +522,12 @@ public class Main implements ApplicationListener {
                 chipSprite.setAlpha(alphaShift);
                 bartSprite.setTexture(bartHurtedTexture);
                 break;
+            case BLUE_HURTED:
+            case BLUE_HURTED_SHIFT:
+                chipSprite.setTexture(brokenBlueChipTexture);
+                chipSprite.setAlpha(alphaShift);
+                bartSprite.setTexture(blueBurtHurtTexture);
+                break;
             case DEAD:
                 chipSprite.setAlpha(alphaShift);
                 bartSprite.setTexture(deadBart);
@@ -526,7 +542,10 @@ public class Main implements ApplicationListener {
             float duffWidth = duffSprite.getWidth();
             float duffHeight = duffSprite.getHeight();
 
-            duffSprite.translateY((duffSpeed * delta));
+            if (estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT)
+                duffSprite.translateY((duffSpeed * blueMultiplier * delta));
+            else
+                duffSprite.translateY((duffSpeed * delta));
             duffRectangle.set(duffSprite.getX(), duffSprite.getY(), duffWidth, duffHeight);
 
             if (duffSprite.getY() < -duffHeight)
@@ -589,7 +608,7 @@ public class Main implements ApplicationListener {
          */
         timerPowerups += delta;
         if (timerPowerups > cooldownPowerups) {
-            if (capasSprites.size == 0 && estadoBart!=EstadoBart.BLUE && estadoBart!=EstadoBart.BLUE_SHIFT)
+            if (capasSprites.size == 0 && estadoBart != EstadoBart.BLUE && estadoBart != EstadoBart.BLUE_SHIFT)
                 createCapa();
             else
                 System.out.println("CAPA NO SPAWNEADA");
@@ -658,6 +677,12 @@ public class Main implements ApplicationListener {
         shapeRenderer.rect(20, worldHeight - 35, anchoActual, barraVidaAlto);
 
         shapeRenderer.end();
+    }
+
+    // devuelve si es azul (powerup capa)
+    private boolean isBlue() {
+        return estadoBart == EstadoBart.BLUE || estadoBart == EstadoBart.BLUE_SHIFT ||
+            estadoBart == EstadoBart.BLUE_HURTED || estadoBart == EstadoBart.BLUE_HURTED_SHIFT;
     }
 
     private void clearBullets() {
