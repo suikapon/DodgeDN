@@ -417,7 +417,11 @@ public class Main implements ApplicationListener {
         }
 
         // bart
-
+        if (bartHit)
+        {
+            takeDamage();
+            bartHit = false;
+        }
         // estados de bart y transiciones chip
         switch (estadoBart) {
             case NORMAL:
@@ -490,15 +494,10 @@ public class Main implements ApplicationListener {
         timerVidas += delta;
         if (timerVidas > cooldownVida) {
             if (vidaBart<3 && vidaBart>0)
-                createVida();
+                if (vidaSprites.size==0)
+                    createVida();
             timerVidas = 0;
-            cooldownVida = MathUtils.random(1f, maxEsperaVida/vidaBart);
-        }
-
-        if (bartHit)
-        {
-            takeDamage();
-            bartHit = false;
+            cooldownVida = MathUtils.random(5f, maxEsperaVida/vidaBart);
         }
     }
 
