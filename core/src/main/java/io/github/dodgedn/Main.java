@@ -251,6 +251,8 @@ public class Main implements ApplicationListener {
                 estadoBart = shifting ? EstadoBart.SHIFT : EstadoBart.NORMAL;
         }
 
+        // a
+
         // aplicar multiplicadores
         if (isBlue())
             speed *= blueMultiplier;
