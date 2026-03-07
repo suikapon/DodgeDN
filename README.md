@@ -13,7 +13,7 @@ Shift - Focus (mitad de velocidad y hurtbox visible)
 
 G - Activar/Desactivar modo debug. Con modo debug puedes hacer todo lo siguiente:
 Q - Activar/Desactivar transformación Blue Bart (velocidad movimiento y proyectiles x1.5)
-Q - Activar/Desactivar Godmode (no perder vidas
+0 - Activar/Desactivar Godmode (no perder vidas
 1 - Spawnear vida
 2 - Spawnear capa (Powerup Blue Bart)
 3 - Spawnear friend (resta mitad de puntos, tapa bastante pantalla)
@@ -32,13 +32,17 @@ Debajo, en el constructor, se inicializan todos los atributos mencionados anteri
 
 Lógica importante:
 vidaBart: La cantidad de vidas del personaje (3). Es importante declarar estos valores arriba, por si en un futuro se decide modificar el valor, por eso añadí también maxVidaBart, aunque de momento no lo he usado.
+
 speed: Velocidad del personaje. Es igual a "300+vidaBart*100", para que contra menos vida tengas más lento seas. 300 es la velocidad base.
 delta: MUY IMPORTANTE para que los FPS no afecten a la velocidad de los sprites/animaciones. Este valor se multiplicará por la variable deseada (timers, speed…) 
+
 EstadoBart: Enum que define los distintos estados en los que puede estar Bart: "NORMAL, SHIFT, BLUE, BLUE_SHIFT, HURTED, HURTED_SHIFT, BLUE_HURTED, BLUE_HURTED_SHIFT, DEAD". 
+
 En el programa se define luego la lógica para saber cuándo debe estar en cada estado: 
 	- Vida menor o igual a 0? -> "., sino:
 		- Es azul? -> Vida igual a 1? -> Shiftea? -> BLUE_HURTED_SHIFT sino -> BLUE_HURTED
 		- etc...
+
 Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde.
 
 Conclusiones: Me ha gustado bastante hacer todo esto, seguramente siga en el desarrollo como hobbie.
