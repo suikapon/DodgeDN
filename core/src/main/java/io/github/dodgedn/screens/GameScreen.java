@@ -435,7 +435,7 @@ public class GameScreen implements Screen {
 
             // god mode (vidas infinitas)
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0))
-                godMode = true;
+                godMode = !godMode;
         }
 
     }
