@@ -96,7 +96,7 @@ public class GameScreen implements Screen {
     float timerDuracionPowerup;
     float timerDebug;
     float timerFriend;
-    float timerMuerte = 0;
+    float timerFin = 0;
 
     Rectangle bartRectangle;
     Rectangle homerRectangle;
@@ -136,7 +136,8 @@ public class GameScreen implements Screen {
     EstadoBart lastEstado = EstadoBart.DEAD;
     boolean modoDebug = false;
     boolean godMode = false;
-    boolean changeScreen = false;
+    boolean deadScreen = false;
+    boolean winScreen = false;
     boolean shifting = false;
     // multiplicadores de bart
     float shiftMultiplier = 0.5f; // mitad
@@ -270,9 +271,14 @@ public class GameScreen implements Screen {
         logic();
         draw();
 
-        if (changeScreen) {
+        if (deadScreen) {
             dispose();
-            game.setScreen(new MainMenuScreen(game));
+            game.setScreen(new DeadMenuScreen(game, puntuacion));
+        }
+
+        if (winScreen) {
+            dispose();
+            game.setScreen(new WinMenuScreen(game, puntuacion));
         }
     }
 
@@ -295,9 +301,9 @@ public class GameScreen implements Screen {
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
-            timerMuerte += delta;
-            if (timerMuerte >= 1f)
-                changeScreen = true;
+            timerFin += delta;
+            if (timerFin >= 1f)
+                deadScreen = true;
         } else {
             if (isBlue()) {
                 if (vidaBart == 1)
@@ -492,6 +498,9 @@ public class GameScreen implements Screen {
             }
         } else {
             homerSprite.setTexture(homerSleepingTexture);
+            timerFin += delta;
+            if (timerFin >= 1f)
+                winScreen = true;
         }
 
         if (vidaHomer <= 50 && vidaHomer > 0)

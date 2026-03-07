@@ -9,18 +9,20 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import io.github.dodgedn.Dodge;
 
-public class MainMenuScreen implements Screen {
+public class WinMenuScreen implements Screen {
     final Dodge game;
     GlyphLayout titulo;
-    GlyphLayout movil;
-    GlyphLayout pc;
+    GlyphLayout puntuacionLayout;
+    GlyphLayout volver;
 
-    public MainMenuScreen(final Dodge game) {
+    long puntuacion;
+    public WinMenuScreen(final Dodge game, long puntuacion) {
         this.game = game;
+        this.puntuacion = puntuacion;
         game.font.getData().setScale(2f);
-        this.titulo = new GlyphLayout(game.font, "Dodge!");
-        this.movil = new GlyphLayout(game.font, "Tocar pantalla - Controles móviles");
-        this.pc = new GlyphLayout(game.font, "Espacio - Controles PC");
+        this.titulo = new GlyphLayout(game.font, "Ganaste!");
+        this.puntuacionLayout = new GlyphLayout(game.font, "Puntuación: "+puntuacion);
+        this.volver = new GlyphLayout(game.font, "Espacio/Tocar - Volver");
     }
 
     @Override
@@ -41,16 +43,13 @@ public class MainMenuScreen implements Screen {
         game.batch.begin();
 
         game.font.draw(game.batch, titulo, centrarH(worldWidth,titulo), centrarV(worldHeight,titulo)+30);
-        game.font.draw(game.batch, movil, centrarH(worldWidth,movil), centrarV(worldHeight,movil)-30);
-        game.font.draw(game.batch, pc, centrarH(worldWidth,pc), centrarV(worldHeight,pc)-60);
+        game.font.draw(game.batch, puntuacionLayout, centrarH(worldWidth,puntuacionLayout), centrarV(worldHeight,puntuacionLayout)-30);
+        game.font.draw(game.batch, volver, centrarH(worldWidth,volver), centrarV(worldHeight,volver)-60);
 
         game.batch.end();
 
-        if (Gdx.input.justTouched()) {
-            game.setScreen(new GameScreen(game, true));
-            dispose();
-        } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            game.setScreen(new GameScreen(game, false));
+        if (Gdx.input.justTouched() || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            game.setScreen(new MainMenuScreen(game));
             dispose();
         }
     }
@@ -89,5 +88,4 @@ public class MainMenuScreen implements Screen {
     public void dispose() {
 
     }
-
 }

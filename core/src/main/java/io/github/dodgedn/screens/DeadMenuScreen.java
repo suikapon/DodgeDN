@@ -9,18 +9,20 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import io.github.dodgedn.Dodge;
 
-public class MainMenuScreen implements Screen {
+public class DeadMenuScreen implements Screen {
     final Dodge game;
     GlyphLayout titulo;
-    GlyphLayout movil;
-    GlyphLayout pc;
+    GlyphLayout puntuacionLayout;
+    GlyphLayout volver;
+    long puntuacion;
 
-    public MainMenuScreen(final Dodge game) {
+    public DeadMenuScreen(final Dodge game, long puntuacion) {
         this.game = game;
+        this.puntuacion = puntuacion;
         game.font.getData().setScale(2f);
-        this.titulo = new GlyphLayout(game.font, "Dodge!");
-        this.movil = new GlyphLayout(game.font, "Tocar pantalla - Controles móviles");
-        this.pc = new GlyphLayout(game.font, "Espacio - Controles PC");
+        this.titulo = new GlyphLayout(game.font, "Perdiste...");
+        this.puntuacionLayout = new GlyphLayout(game.font, "Puntuación: " + this.puntuacion);
+        this.volver = new GlyphLayout(game.font, "Espacio/Tocar - Volver");
     }
 
     @Override
@@ -40,29 +42,24 @@ public class MainMenuScreen implements Screen {
 
         game.batch.begin();
 
-        game.font.draw(game.batch, titulo, centrarH(worldWidth,titulo), centrarV(worldHeight,titulo)+30);
-        game.font.draw(game.batch, movil, centrarH(worldWidth,movil), centrarV(worldHeight,movil)-30);
-        game.font.draw(game.batch, pc, centrarH(worldWidth,pc), centrarV(worldHeight,pc)-60);
+        game.font.draw(game.batch, titulo, centrarH(worldWidth, titulo), centrarV(worldHeight, titulo) + 30);
+        game.font.draw(game.batch, puntuacionLayout, centrarH(worldWidth, puntuacionLayout), centrarV(worldHeight, puntuacionLayout) - 30);
+        game.font.draw(game.batch, volver, centrarH(worldWidth,volver), centrarV(worldHeight,volver)-60);
 
         game.batch.end();
 
-        if (Gdx.input.justTouched()) {
-            game.setScreen(new GameScreen(game, true));
-            dispose();
-        } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            game.setScreen(new GameScreen(game, false));
+        if (Gdx.input.justTouched() || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            game.setScreen(new MainMenuScreen(game));
             dispose();
         }
     }
 
-    private float centrarH(float worldWidth, GlyphLayout texto)
-    {
-        return worldWidth/2 - texto.width/2;
+    private float centrarH(float worldWidth, GlyphLayout texto) {
+        return worldWidth / 2 - texto.width / 2;
     }
 
-    private float centrarV(float worldHeight, GlyphLayout texto)
-    {
-        return worldHeight/2 + texto.height/2;
+    private float centrarV(float worldHeight, GlyphLayout texto) {
+        return worldHeight / 2 + texto.height / 2;
     }
 
     @Override
