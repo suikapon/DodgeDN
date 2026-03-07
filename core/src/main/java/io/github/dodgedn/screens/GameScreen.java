@@ -7,6 +7,8 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -23,6 +25,10 @@ import io.github.dodgedn.estados.EstadoBart;
 public class GameScreen implements Screen {
     final Dodge game;
     boolean controlesMovil;
+
+    long puntuacion;
+    GlyphLayout puntuacionLayout;
+    BitmapFont font;
 
     Texture bgTexture;
     Texture bartTexture;
@@ -109,6 +115,7 @@ public class GameScreen implements Screen {
 
     int vidaBart = 3;
     int maxVidaBart = 3;
+    int totalVidasPerdidas = 0;
     boolean derecha = true;
     // cooldowns
     float cooldownPowerups;
@@ -136,6 +143,12 @@ public class GameScreen implements Screen {
     public GameScreen(final Dodge game, boolean controlesMovil) {
         this.game = game;
         this.controlesMovil = controlesMovil;
+
+        puntuacion = 0;
+        font = new BitmapFont();
+        font.setColor(Color.WHITE);
+        font.getData().setScale(2f);
+        puntuacionLayout = new GlyphLayout();
 
         friendTexture = new Texture("friend.png");
         capaTexture = new Texture("capa.png");
@@ -639,8 +652,11 @@ public class GameScreen implements Screen {
                 duffSprites.removeIndex(i);
             else if (homerRectangle.overlaps(duffRectangle)) {
                 hDoh.play();
+                long puntuacionSumada = (long) ((((maxVidaHomer-vidaHomer)+10)*666)/(totalVidasPerdidas+1));
+                puntuacion += puntuacionSumada;
                 vidaHomer -= 5;
                 duffSprites.removeIndex(i);
+                System.out.println("+"+puntuacionSumada+" PUNTOS");
             }
         }
 
@@ -757,8 +773,13 @@ public class GameScreen implements Screen {
             capaSprite.draw(spriteBatch);
         }
 
-        buttonShiftSprite.draw(spriteBatch);
-        buttonDuffSprite.draw(spriteBatch);
+        puntuacionLayout.setText(font, "Puntos: "+puntuacion);
+        font.draw(spriteBatch, puntuacionLayout, 20f,worldHeight-45);
+
+        if (controlesMovil) {
+            buttonShiftSprite.draw(spriteBatch);
+            buttonDuffSprite.draw(spriteBatch);
+        }
 
         spriteBatch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -796,9 +817,13 @@ public class GameScreen implements Screen {
     private void takeDamage() {
         bDoh.play();
         vidaBart--;
+        totalVidasPerdidas++;
         timerVidas = 0;
         cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
+        long puntosRestados = (long) ((vidaHomer)/(totalVidasPerdidas+1)*666);
+        puntuacion -= puntosRestados;
         System.out.println("VIDA EN " + cooldownVida + " SEGUNDOS");
+        System.out.println("-"+puntosRestados+" PUNTOS");
         clearBullets();
     }
 
