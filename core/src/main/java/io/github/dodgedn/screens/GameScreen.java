@@ -95,6 +95,7 @@ public class GameScreen implements Screen {
     float duracionCapa;
     float timerDuracionPowerup;
     float timerDebug;
+    float timerFriend;
     float timerMuerte = 0;
 
     Rectangle bartRectangle;
@@ -124,6 +125,7 @@ public class GameScreen implements Screen {
     float cooldownSideBullet;
     float cooldownDiagonalBullet;
     float cooldownVida;
+    float cooldownFriend;
     float maxEsperaVida = 30f;
     float maxEsperaCapa = 20f;
     float alphaShift = 0f;
@@ -133,6 +135,7 @@ public class GameScreen implements Screen {
     boolean primeraDuffDisparada = false;
     EstadoBart lastEstado = EstadoBart.DEAD;
     boolean modoDebug = false;
+    boolean godMode = false;
     boolean changeScreen = false;
     boolean shifting = false;
     // multiplicadores de bart
@@ -249,6 +252,8 @@ public class GameScreen implements Screen {
         cooldownDiagonalBullet = MathUtils.random(2f, 4f);
         cooldownVida = -1f;
         cooldownPowerups = MathUtils.random(10f, maxEsperaCapa * vidaBart);
+        cooldownFriend = MathUtils.random(1f, vidaHomer/3);
+        System.out.println("FRIEND EN " + cooldownFriend + " SEGUNDOS");
         System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
 
         duracionCapa = 15f;
@@ -415,7 +420,7 @@ public class GameScreen implements Screen {
                     System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
                 }
             }
-            // Con la Q alternas entre powerup y normal, 1 vida, 2 capa
+            // Con la Q alternas entre powerup y normal, 1 vida, 2 capa, 3 friend
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
                 estadoBart = isBlue() ? EstadoBart.NORMAL : EstadoBart.BLUE;
 
@@ -424,6 +429,13 @@ public class GameScreen implements Screen {
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2))
                 createCapa();
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3))
+                createFriend();
+
+            // god mode (vidas infinitas)
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0))
+                godMode = true;
         }
 
     }
@@ -609,6 +621,27 @@ public class GameScreen implements Screen {
             }
         }
 
+        // friends (icono gato), resta muchos puntos
+        for (int i = friendSprites.size - 1; i >= 0; i--) {
+            Sprite friendSprite = friendSprites.get(i);
+            float width = friendSprite.getWidth();
+            float height = friendSprite.getHeight();
+
+            friendSprite.translateY((powerUpSpeed * delta));
+
+            friendRectangle.set(friendSprite.getX(), friendSprite.getY(), width, height);
+
+            if (friendSprite.getY() < -height)
+                friendSprites.removeIndex(i);
+            else if (bartRectangle.overlaps(friendRectangle)) {
+                bDoh.play();
+                friendSprites.removeIndex(i);
+                long puntuacionRestada = (Math.abs(puntuacion)/2);
+                puntuacion -= puntuacionRestada;
+                System.out.println("-"+puntuacionRestada+" PUNTOS...");
+            }
+        }
+
         // bart
         if (bartHit) {
             takeDamage();
@@ -735,6 +768,15 @@ public class GameScreen implements Screen {
             System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
         }
 
+        // cooldown friend
+        timerFriend += delta;
+        if (timerFriend > cooldownFriend) {
+            createFriend();
+            timerFriend = 0;
+            cooldownFriend = MathUtils.random(1f, vidaHomer/3);
+            System.out.println("FRIEND EN " + cooldownFriend + " SEGUNDOS");
+        }
+
         // duracion capa
         if (isBlue()) {
             timerDuracionPowerup += delta;
@@ -788,6 +830,10 @@ public class GameScreen implements Screen {
             capaSprite.draw(spriteBatch);
         }
 
+        for (Sprite friendSprite : friendSprites) {
+            friendSprite.draw(spriteBatch);
+        }
+
         puntuacionLayout.setText(font, "Puntos: "+puntuacion);
         font.draw(spriteBatch, puntuacionLayout, 20f,worldHeight-45);
 
@@ -831,7 +877,8 @@ public class GameScreen implements Screen {
 
     private void takeDamage() {
         bDoh.play();
-        vidaBart--;
+        if (!godMode)
+            vidaBart--;
         totalVidasPerdidas++;
         timerVidas = 0;
         cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
@@ -866,6 +913,18 @@ public class GameScreen implements Screen {
         capaSprite.setPosition(randomX, viewport.getWorldHeight());
         capasSprites.add(capaSprite);
         System.out.println("---------------\nCAPA SPAWNEADA\n---------------");
+    }
+
+    private void createFriend() {
+        float width = 100;
+        float height = 100;
+        float randomX = MathUtils.random(width, viewport.getWorldWidth() - width);
+        Sprite friendSprite = new Sprite(friendTexture);
+        friendSprite.setSize(width, height);
+
+        friendSprite.setPosition(randomX, viewport.getWorldHeight());
+        friendSprites.add(friendSprite);
+        System.out.println("---------------\nFRIEND\n---------------");
     }
 
     private void createBullet() {
