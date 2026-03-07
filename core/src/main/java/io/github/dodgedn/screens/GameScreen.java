@@ -22,6 +22,7 @@ import io.github.dodgedn.estados.EstadoBart;
 
 public class GameScreen implements Screen {
     final Dodge game;
+    boolean controlesMovil;
 
     Texture bgTexture;
     Texture bartTexture;
@@ -48,6 +49,8 @@ public class GameScreen implements Screen {
     Texture blueBurtHurtTexture;
     Texture brokenBlueChipTexture;
 
+    Texture buttonTexture;
+
     Sound piu;
     Sound powerup;
     Sound vida;
@@ -61,6 +64,8 @@ public class GameScreen implements Screen {
     Sprite bartSprite;
     Sprite chipSprite;
     Sprite homerSprite;
+    Sprite buttonDuffSprite;
+    Sprite buttonShiftSprite;
 
     Vector2 touchPos;
     Array<Sprite> bulletSprites;
@@ -120,13 +125,15 @@ public class GameScreen implements Screen {
     EstadoBart lastEstado = EstadoBart.DEAD;
     boolean modoDebug = false;
     boolean changeScreen = false;
+    boolean shifting = false;
     // multiplicadores de bart
     float shiftMultiplier = 0.5f; // mitad
     float blueMultiplier = 1.5f; // x1.5
 
 
-    public GameScreen(final Dodge game) {
+    public GameScreen(final Dodge game, boolean controlesMovil) {
         this.game = game;
+        this.controlesMovil = controlesMovil;
 
         friendTexture = new Texture("friend.png");
         capaTexture = new Texture("capa.png");
@@ -152,6 +159,16 @@ public class GameScreen implements Screen {
         homerSemiSleepingTexture = new Texture("homeralmsleep.png");
         homerSleepingTexture = new Texture("homersleep.png");
         rosquillaTexture = new Texture("rosquilla.png");
+
+        buttonTexture = new Texture("button.png");
+        buttonShiftSprite = new Sprite(buttonTexture);
+        buttonShiftSprite.setSize(100, 100);
+        buttonShiftSprite.setPosition(5, 5);
+
+        buttonDuffSprite = new Sprite(buttonTexture);
+        buttonDuffSprite.setSize(100, 100);
+        buttonDuffSprite.setPosition(125, 5);
+
         bDoh = Gdx.audio.newSound(Gdx.files.internal("bart_doh.mp3"));
         hDoh = Gdx.audio.newSound(Gdx.files.internal("homer_doh.mp3"));
         piu = Gdx.audio.newSound(Gdx.files.internal("piu.mp3"));
@@ -242,14 +259,22 @@ public class GameScreen implements Screen {
         float delta = Gdx.graphics.getDeltaTime();
         timerDisparo += delta;
 
-        boolean shifting = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
+        if (!controlesMovil)
+            shifting = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
+        else if (Gdx.input.justTouched()) {
+            touchPos.set(Gdx.input.getX(), Gdx.input.getY());
+            game.viewport.unproject(touchPos);
+
+            if (buttonShiftSprite.getBoundingRectangle().contains(touchPos))
+                shifting = !shifting;
+        }
 
         // estados de bart (muerto, shifteando, vivo, poca vida...)
         if (vidaBart <= 0) {
             estadoBart = EstadoBart.DEAD;
             speed = 0;
-            timerMuerte+=delta;
-            if (timerMuerte>=1f)
+            timerMuerte += delta;
+            if (timerMuerte >= 1f)
                 changeScreen = true;
         } else {
             if (isBlue()) {
@@ -277,44 +302,91 @@ public class GameScreen implements Screen {
             alphaShift -= fadeSpeed * delta;
         alphaShift = MathUtils.clamp(alphaShift, 0f, 1f);
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            bartSprite.setFlip(true, false);
-            bartSprite.translateX(speed * delta);
-        }
+        if (!controlesMovil) {
+            if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+                bartSprite.setFlip(true, false);
+                bartSprite.translateX(speed * delta);
+            }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            bartSprite.translateX(-speed * delta);
-            bartSprite.setFlip(false, false);
-        }
+            if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+                bartSprite.translateX(-speed * delta);
+                bartSprite.setFlip(false, false);
+            }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.UP))
-            bartSprite.translateY(speed * delta);
+            if (Gdx.input.isKeyPressed(Input.Keys.UP))
+                bartSprite.translateY(speed * delta);
 
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN))
-            bartSprite.translateY(-speed * delta);
+            if (Gdx.input.isKeyPressed(Input.Keys.DOWN))
+                bartSprite.translateY(-speed * delta);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.Z)) {
-            if (primeraDuffDisparada) {
-                if (vidaBart == 3)
-                    cooldownDuff = 1f;
-                else if (vidaBart == 2)
-                    cooldownDuff = 1.5f;
-                else
-                    cooldownDuff = 2f;
+            if (Gdx.input.isKeyJustPressed(Input.Keys.Z)) {
+                if (primeraDuffDisparada) {
+                    if (vidaBart == 3)
+                        cooldownDuff = 1f;
+                    else if (vidaBart == 2)
+                        cooldownDuff = 1.5f;
+                    else
+                        cooldownDuff = 2f;
 
-                if (timerDisparo > cooldownDuff && estadoBart != EstadoBart.DEAD) {
+                    if (timerDisparo > cooldownDuff && estadoBart != EstadoBart.DEAD) {
+                        createDuff();
+                        timerDisparo = 0f;
+                    }
+                } else {
                     createDuff();
+                    primeraDuffDisparada = true;
                     timerDisparo = 0f;
                 }
-            } else {
-                createDuff();
-                primeraDuffDisparada = true;
-                timerDisparo = 0f;
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.G))
+                modoDebug = true;
+        } else {
+
+            if (Gdx.input.justTouched()) {
+                touchPos.set(Gdx.input.getX(), Gdx.input.getY());
+                game.viewport.unproject(touchPos);
+
+                if (buttonDuffSprite.getBoundingRectangle().contains(touchPos))
+                    if (primeraDuffDisparada) {
+                        if (vidaBart == 3)
+                            cooldownDuff = 1f;
+                        else if (vidaBart == 2)
+                            cooldownDuff = 1.5f;
+                        else
+                            cooldownDuff = 2f;
+
+                        if (timerDisparo > cooldownDuff && estadoBart != EstadoBart.DEAD) {
+                            createDuff();
+                            timerDisparo = 0f;
+                        }
+                    } else {
+                        createDuff();
+                        primeraDuffDisparada = true;
+                        timerDisparo = 0f;
+                    }
+            }
+
+            if (Gdx.input.isTouched()) {
+                touchPos.set(Gdx.input.getX(), Gdx.input.getY());
+                game.viewport.unproject(touchPos);
+
+                if (!buttonShiftSprite.getBoundingRectangle().contains(touchPos) &&
+                    !buttonDuffSprite.getBoundingRectangle().contains(touchPos)) {
+                    if (touchPos.x > bartSprite.getX())
+                        bartSprite.translateX(speed * delta);
+
+                    if (touchPos.x < bartSprite.getX())
+                        bartSprite.translateX(-speed * delta);
+
+                    if (touchPos.y > bartSprite.getY())
+                        bartSprite.translateY(speed * delta);
+
+                    if (touchPos.y < bartSprite.getY())
+                        bartSprite.translateY(-speed * delta);
+                }
             }
         }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.G))
-            modoDebug = true;
 
         if (modoDebug) {
             // para debug
@@ -671,6 +743,9 @@ public class GameScreen implements Screen {
         for (Sprite capaSprite : capasSprites) {
             capaSprite.draw(spriteBatch);
         }
+
+        buttonShiftSprite.draw(spriteBatch);
+        buttonDuffSprite.draw(spriteBatch);
 
         spriteBatch.end();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);

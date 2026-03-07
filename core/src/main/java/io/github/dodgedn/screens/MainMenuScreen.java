@@ -1,6 +1,7 @@
 package io.github.dodgedn.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -11,13 +12,15 @@ import io.github.dodgedn.Dodge;
 public class MainMenuScreen implements Screen {
     final Dodge game;
     GlyphLayout titulo;
-    GlyphLayout descripcion;
+    GlyphLayout movil;
+    GlyphLayout pc;
 
     public MainMenuScreen(final Dodge game) {
         this.game = game;
-        game.font.getData().setScale(3);
+        game.font.getData().setScale(2f);
         this.titulo = new GlyphLayout(game.font, "Dodge!");
-        this.descripcion = new GlyphLayout(game.font, "Clic para empezar");
+        this.movil = new GlyphLayout(game.font, "Tocar pantalla - Controles móviles");
+        this.pc = new GlyphLayout(game.font, "Espacio - Controles PC");
     }
 
     @Override
@@ -38,12 +41,16 @@ public class MainMenuScreen implements Screen {
         game.batch.begin();
 
         game.font.draw(game.batch, titulo, centrarH(worldWidth,titulo), centrarV(worldHeight,titulo)+30);
-        game.font.draw(game.batch, descripcion, centrarH(worldWidth,descripcion), centrarV(worldHeight,descripcion)-30);
+        game.font.draw(game.batch, movil, centrarH(worldWidth,movil), centrarV(worldHeight,movil)-30);
+        game.font.draw(game.batch, pc, centrarH(worldWidth,pc), centrarV(worldHeight,pc)-60);
 
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
-            game.setScreen(new GameScreen(game));
+            game.setScreen(new GameScreen(game, true));
+            dispose();
+        } else if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            game.setScreen(new GameScreen(game, false));
             dispose();
         }
     }
