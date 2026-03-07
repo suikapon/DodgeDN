@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.utils.ScreenUtils;
 
@@ -14,13 +15,24 @@ public class MainMenuScreen implements Screen {
     GlyphLayout titulo;
     GlyphLayout movil;
     GlyphLayout pc;
+    BitmapFont font2;
+    GlyphLayout controlesPc;
+    GlyphLayout controlesAndroid;
+    GlyphLayout instrucciones;
 
     public MainMenuScreen(final Dodge game) {
         this.game = game;
+        this.font2 = new BitmapFont();
+        font2.setColor(Color.WHITE);
+        font2.getData().setScale(1f);
         game.font.getData().setScale(2f);
         this.titulo = new GlyphLayout(game.font, "Dodge!");
-        this.movil = new GlyphLayout(game.font, "Tocar pantalla - Controles móviles");
-        this.pc = new GlyphLayout(game.font, "Espacio - Controles PC");
+        this.movil = new GlyphLayout(game.font, "Tocar pantalla - Usar Móvil");
+        this.pc = new GlyphLayout(game.font, "Espacio - Usar Teclado");
+
+        this.controlesPc = new GlyphLayout(game.font, "CONTROLES PC:\nFLECHAS -> MOVIMIENTO\nZ -> DISPARO DUFF\nSHIFT -> FOCUS");
+        this.controlesAndroid = new GlyphLayout(game.font, "CONTROLES ANDROID:\nTOCAR -> MOVIMIENTO\nBOTÓN 1 -> FOCUS\nBOTÓN 2 -> DISPARO DUFF");
+        this.instrucciones = new GlyphLayout(game.font, "INSTRUCCIONES:\nDISPARA DUFFS A HOMER\nEVITA LAS BALAS\nATRAPA LOS POWERUPS\nLOS GATOS NO SON TUS AMIGOS\nJUST DODGE!");
     }
 
     @Override
@@ -40,9 +52,13 @@ public class MainMenuScreen implements Screen {
 
         game.batch.begin();
 
-        game.font.draw(game.batch, titulo, centrarH(worldWidth,titulo), centrarV(worldHeight,titulo)+30);
-        game.font.draw(game.batch, movil, centrarH(worldWidth,movil), centrarV(worldHeight,movil)-30);
-        game.font.draw(game.batch, pc, centrarH(worldWidth,pc), centrarV(worldHeight,pc)-60);
+        game.font.draw(game.batch, titulo, centrarH(worldWidth,titulo), worldHeight-30);
+        game.font.draw(game.batch, movil, centrarH(worldWidth,movil), worldHeight-60);
+        game.font.draw(game.batch, pc, centrarH(worldWidth,pc), worldHeight-90);
+
+        game.font.draw(game.batch, controlesPc, centrarH(worldWidth,controlesPc), worldHeight-160);
+        game.font.draw(game.batch, controlesAndroid, centrarH(worldWidth,controlesAndroid), worldHeight-350);
+        game.font.draw(game.batch, instrucciones, centrarH(worldWidth,instrucciones), worldHeight-530);
 
         game.batch.end();
 
