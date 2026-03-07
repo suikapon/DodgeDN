@@ -49,7 +49,21 @@ En el programa se define luego la lógica para saber cuándo debe estar en cada 
 
 Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde. También hay una variable shift para saber si estás en modo Focus o no.
 
-Duffs (disparos): Cada duff es un sprite, con su textura. También existe un array de duffs. Se crea un método createDuff que define su tamaño y posición de inicio, que será las coordenadas de Bart y se añade al Array. En la lógica, se recorre el Array, se define su gravedad, que será positiva en coordenadas Y. Se agregan los multiplicadores (poca vida = más lento, isBlue = más rápido) y se multiplica por delta. Entre disparo hay un cooldown, este se define y gracias a un timer se comprueba si se puede disparar. Duando se dispara, el timer vuelve a 0. En el draw se pinta para que salga en pantalla
+Bart Duffs (disparos): Cada duff es un sprite, con su textura. También existe un array de duffs. Se crea un método createDuff que define su tamaño y posición de inicio, que será las coordenadas de Bart y se añade al Array. En la lógica, se recorre el Array, se define su gravedad, que será positiva en coordenadas Y. Se agregan los multiplicadores (poca vida = más lento, isBlue = más rápido) y se multiplica por delta. Entre disparo hay un cooldown, este se define y gracias a un timer se comprueba si se puede disparar. Duando se dispara, el timer vuelve a 0. En el draw se pinta para que salga en pantalla
+
+Bullets general: Su cooldown será random, pero directamente proporcional a vida de Homer (menos vida = menos cooldown)
+
+Bullets rápidas y lentas: Similares a los disparos de duff, solo que aparecen desde las coordenadas en las que esté Homer y la velocidad es negativa, ya que deben bajar. 
+
+Bullets horizontales: Este es curioso, ya que pueden aparecer tanto en la izquierda como en la derecha, y si creamos un boolean general, éste cambiará en cada bala creada y afectará a todas las horizontales en pantalla, por lo que se bugeará y no se moverán como es debido. Se podría haber solucionado creando una clase SideBullet que tenga un atributo boolean derecha: si empieza en la derecha, speed es negativo. También se podrían haber creado dos sprites: sideBulletDerecha y sideBulletIzquierda, pero esa opción no sería muy buena. En mi caso, decidí crear un nuevo Array boolean que decide si la bala empieza en la derecha o no, esto se decide aleatoriamente. Como el Array de derecha siempre tendrá el mismo tamaño que el Array de sideBullets, no habría problema en usar "i" dentro del bucle for. La bala aparece siempre en un punto random de Y, y se moverá donde corresponda
+
+Bullets diagonales: Similares a las horizontales. Mantienen el Array derecha (ahora llamado spawnDerecha para no interferir) para decidir dónde aparecerán, solo que ahora se mueven en X e Y hacia abajo, al ser diagonales.
+
+Vidas: Si tienes entre 1 y 2 vidas, podrá aparecer aleatoriamente una vida en una posición aleatoria de X y en la máxima de Y, con una velocidad negativa en Y para que baje. El cooldown de spawneo de vida dependerá de la vida que tengas (menos vida = más probabilidad). Lógica similar a una bullet normal (array, sprite, colisión, velocidad...). Si ya hay una vida en pantalla, no podrá aparecer otra. Al detectar colisión Bart, tu vida aumentará en 1, sonido de vida y puntuación + puntuación que tengas*1.1 (siempre positivo)
+
+Capas: Muy similar a vidas, cooldown distinto. Al detectar que Bart entra en colisión, sonido de powerup, estado de Bart a blue
+
+Friend: Como vidas y capas, solo que Friend se debe evitar, ya que resta puntos. Colisión = menos puntos, sonido bDoh
 
 Conclusiones: Me ha gustado bastante hacer todo esto, seguramente siga en el desarrollo como hobbie.
 Las flags booleanas son bastante útiles, tengo pensado hacer más para hacer más legible y óptimo el código, ya que veo cosas que no están donde me gustaría que estuviesen, ya que he ido aprendiendo cosas nuevas mientras desarrollaba todo.
