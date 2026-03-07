@@ -86,6 +86,8 @@ public class GameScreen implements Screen {
     float timerDisparo;
     float timerVidas;
     float timerPowerups;
+    float duracionCapa;
+    float timerDuracionPowerup;
     float timerDebug;
     float timerMuerte = 0;
 
@@ -235,6 +237,8 @@ public class GameScreen implements Screen {
         cooldownVida = -1f;
         cooldownPowerups = MathUtils.random(10f, maxEsperaCapa * vidaBart);
         System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
+
+        duracionCapa = 15f;
     }
 
     @Override
@@ -698,6 +702,15 @@ public class GameScreen implements Screen {
             timerPowerups = 0;
             cooldownPowerups = MathUtils.random(10f, maxEsperaCapa * vidaBart);
             System.out.println("CAPA EN " + cooldownPowerups + " SEGUNDOS");
+        }
+
+        // duracion capa
+        if (isBlue()) {
+            timerDuracionPowerup += delta;
+            if (timerDuracionPowerup > duracionCapa) {
+                estadoBart = EstadoBart.NORMAL;
+                timerDuracionPowerup = 0;
+            }
         }
     }
 
