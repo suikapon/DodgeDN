@@ -125,7 +125,7 @@ public class GameScreen implements Screen {
     float cooldownDiagonalBullet;
     float cooldownVida;
     float maxEsperaVida = 30f;
-    float maxEsperaCapa = 25f;
+    float maxEsperaCapa = 20f;
     float alphaShift = 0f;
     float fadeSpeed = 3f;
     EstadoBart estadoBart = EstadoBart.NORMAL;
@@ -415,9 +415,15 @@ public class GameScreen implements Screen {
                     System.out.println("Velocidad: " + speed + " | Estado: " + estadoBart);
                 }
             }
-            // Con la Q alternas entre powerup y normal
+            // Con la Q alternas entre powerup y normal, 1 vida, 2 capa
             if (Gdx.input.isKeyJustPressed(Input.Keys.Q))
                 estadoBart = isBlue() ? EstadoBart.NORMAL : EstadoBart.BLUE;
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1))
+                createVida();
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2))
+                createCapa();
         }
 
     }
@@ -575,6 +581,9 @@ public class GameScreen implements Screen {
                 vida.play();
                 vidaBart++;
                 vidaSprites.removeIndex(i);
+                long puntuacionSumada = (long) (Math.abs(puntuacion)*(1.1f-1));
+                puntuacion += puntuacionSumada;
+                System.out.println("+"+puntuacionSumada+" PUNTOS");
             }
         }
 
@@ -594,6 +603,9 @@ public class GameScreen implements Screen {
                 powerup.play();
                 estadoBart = EstadoBart.BLUE;
                 capasSprites.removeIndex(i);
+                long puntuacionSumada = (long) (Math.abs(puntuacion)*(1.1f-1));
+                puntuacion += puntuacionSumada;
+                System.out.println("+"+puntuacionSumada+" PUNTOS");
             }
         }
 
@@ -652,7 +664,10 @@ public class GameScreen implements Screen {
                 duffSprites.removeIndex(i);
             else if (homerRectangle.overlaps(duffRectangle)) {
                 hDoh.play();
-                long puntuacionSumada = (long) ((((maxVidaHomer-vidaHomer)+10)*666)/(totalVidasPerdidas+1));
+                long puntuacionSumada = (long) ((((maxVidaHomer-vidaHomer)+2)*666))/(totalVidasPerdidas+1);
+                if (isBlue())
+                    puntuacionSumada*= 2;
+
                 puntuacion += puntuacionSumada;
                 vidaHomer -= 5;
                 duffSprites.removeIndex(i);
@@ -821,6 +836,8 @@ public class GameScreen implements Screen {
         timerVidas = 0;
         cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
         long puntosRestados = (long) ((vidaHomer)/(totalVidasPerdidas+1)*666);
+        if (isBlue()) // arma de doble filo!
+            puntosRestados*=2;
         puntuacion -= puntosRestados;
         System.out.println("VIDA EN " + cooldownVida + " SEGUNDOS");
         System.out.println("-"+puntosRestados+" PUNTOS");
