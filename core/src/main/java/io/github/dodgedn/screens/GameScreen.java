@@ -434,8 +434,13 @@ public class GameScreen implements Screen {
                 createFriend();
 
             // god mode (vidas infinitas)
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0))
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0)) {
                 godMode = !godMode;
+                if (godMode)
+                    System.out.println("GODMODE ACTIVADO");
+                else
+                    System.out.println("GODMODE DESACTIVADO");
+            }
         }
 
     }
@@ -882,7 +887,7 @@ public class GameScreen implements Screen {
         totalVidasPerdidas++;
         timerVidas = 0;
         cooldownVida = MathUtils.random(10f, maxEsperaVida * vidaBart);
-        long puntosRestados = (long) ((vidaHomer)/(totalVidasPerdidas+1)*666);
+        long puntosRestados = (long) ((vidaHomer)*(totalVidasPerdidas+1)*100);
         if (isBlue()) // arma de doble filo!
             puntosRestados*=2;
         puntuacion -= puntosRestados;
