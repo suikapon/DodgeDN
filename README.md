@@ -18,6 +18,10 @@ Q - Activar/Desactivar transformación Blue Bart (velocidad movimiento y proyect
 2 - Spawnear capa (Powerup Blue Bart)
 3 - Spawnear friend (resta mitad de puntos, tapa bastante pantalla)
 
+Controles Móvil:
+Tocar pantalla - Movimiento
+Botón 1 - Focus (mitad de velocidad y hurtbox visible)
+Botón 2 - Disparar Duff
 
 Desarrollo:
 Tenemos 4 pantallas (clases): GameScreen (gameplay), WinMenuScreen (cuando ganas), DeadMenuScreen (cuando pierdes), MainMenuScreen (menú principal).
@@ -43,7 +47,9 @@ En el programa se define luego la lógica para saber cuándo debe estar en cada 
 		- Es azul? -> Vida igual a 1? -> Shiftea? -> BLUE_HURTED_SHIFT sino -> BLUE_HURTED
 		- etc...
 
-Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde.
+Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde. También hay una variable shift para saber si estás en modo Focus o no.
+
+Duffs (disparos): Cada duff es un sprite, con su textura. También existe un array de duffs. Se crea un método createDuff que define su tamaño y posición de inicio, que será las coordenadas de Bart y se añade al Array. En la lógica, se recorre el Array, se define su gravedad, que será positiva en coordenadas Y. Se agregan los multiplicadores (poca vida = más lento, isBlue = más rápido) y se multiplica por delta. Entre disparo hay un cooldown, este se define y gracias a un timer se comprueba si se puede disparar. Duando se dispara, el timer vuelve a 0. En el draw se pinta para que salga en pantalla
 
 Conclusiones: Me ha gustado bastante hacer todo esto, seguramente siga en el desarrollo como hobbie.
 Las flags booleanas son bastante útiles, tengo pensado hacer más para hacer más legible y óptimo el código, ya que veo cosas que no están donde me gustaría que estuviesen, ya que he ido aprendiendo cosas nuevas mientras desarrollaba todo.
