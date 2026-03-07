@@ -731,7 +731,7 @@ public class GameScreen implements Screen {
             else
                 createSlowBullet();
             timerBullets = 0;
-            cooldownBullet = MathUtils.random(0.25f, vidaHomer / 100f);
+            cooldownBullet = MathUtils.random(0.4f, vidaHomer / 100f);
         }
 
         // cooldown entre cada bala horizontal
