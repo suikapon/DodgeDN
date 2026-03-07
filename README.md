@@ -47,9 +47,15 @@ En el programa se define luego la lógica para saber cuándo debe estar en cada 
 		- Es azul? -> Vida igual a 1? -> Shiftea? -> BLUE_HURTED_SHIFT sino -> BLUE_HURTED
 		- etc...
 
-Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde. También hay una variable shift para saber si estás en modo Focus o no.
+Movimiento Bart: En el caso de usar controles de ordenador, la lógica del input es bastante sencilla, es seguir y comprender los pasos del ejemplo de Simple Game, pero agregando coordenadas Y, ya que te puedes mover por todo el mapa. En el caso de controles móviles, es más complejo, ya que en Simple Game el cubo se podía teletransportar al tocarlo, y aquí por gameplay no debe ser así, por lo que tuve que agregar condicionales que detectan la posición en la que estás tocando y la de bart, haciendo que siga tu dedo a la velocidad que corresponde. También hay una variable shift para saber si estás en modo Focus o no. Se evita que bart se salga de los bordes estableciendo el mínimo y máximo de X e Y
 
 Bart Duffs (disparos): Cada duff es un sprite, con su textura. También existe un array de duffs. Se crea un método createDuff que define su tamaño y posición de inicio, que será las coordenadas de Bart y se añade al Array. En la lógica, se recorre el Array, se define su gravedad, que será positiva en coordenadas Y. Se agregan los multiplicadores (poca vida = más lento, isBlue = más rápido) y se multiplica por delta. Entre disparo hay un cooldown, este se define y gracias a un timer se comprueba si se puede disparar. Duando se dispara, el timer vuelve a 0. En el draw se pinta para que salga en pantalla
+
+Movimiento Homer: Se crea una flag derecha para saber la dirección en la que se moverá. Siempre que su vida sea mayor a 0, se moverá. Empieza a la derecha con X positivo, al tocar el borde, derecha cambia a false, y gracias a un condicional hacemos que si no es derecha se mueva en X negativo hasta tocar el borde. Su velocidad baja contra menos vida tenga
+
+Barra de vida Homer: Está compuesta de dos ShapeRenderer, uno gris (ancho) y otro amarillo (anchoActual) que irá bajando dependiendo de la vida. Se calcula el porcentaje de su vida y el ancho actual, que será el ancho multiplicado por el porcentaje de vida. 
+
+Colisiones: Cada Sprite tiene sus colisiones. Cuando dos colisiones chocan, se puede provocar un evento, como perder vida (bullets y bart), quitar vida (duffs y homer), etc...
 
 Bullets general: Su cooldown será random, pero directamente proporcional a vida de Homer (menos vida = menos cooldown)
 
@@ -65,12 +71,21 @@ Capas: Muy similar a vidas, cooldown distinto. Al detectar que Bart entra en col
 
 Friend: Como vidas y capas, solo que Friend se debe evitar, ya que resta puntos. Colisión = menos puntos, sonido bDoh
 
+Puntuación: Es un long y un GlyphLayout. Se irá sumando o restando dependiendo de los eventos sucedidos. Con una lógica pensada para su correcto funcionamiento, o al menos la que he visto que funciona bien
+
 Conclusiones: Me ha gustado bastante hacer todo esto, seguramente siga en el desarrollo como hobbie.
 Las flags booleanas son bastante útiles, tengo pensado hacer más para hacer más legible y óptimo el código, ya que veo cosas que no están donde me gustaría que estuviesen, ya que he ido aprendiendo cosas nuevas mientras desarrollaba todo.
 
+El juego tiene bastantes líneas de código, eso no sería problema si tuviese distintas clases y métodos. Me he dado cuenta de que a veces es algo enredado buscar alguna línea de código en específico si no tengo todo bien estructurado, sobre todo cuando hay tanto código. Mientras desarrollaba el proyecto, he ido creando distintos métodos y flags para ayudar, pero hay cosas bastante mejorables. Me gustaría solucionarlas con la experiencia que he tenido desarrollando el juego, ahora que entiendo mejor cómo funciona todo.
 
+Planes a futuro: 
+- Implementar logros (ganar con x puntos, ganar sin perder vida, ganar sin powerups, etc...)
+- Mejorar la estética de los menús
+- Agregar más powerups
+- Agregar un menú con los sprites de powerups y sus descripciones. Al hacer clic en un sprite, sale su descripción
+- Mejorar la música
+- Hacer otro personaje jugable con distintas características (más vida pero más lento, por ejemplo)
 
-
-- Lógica: colisiones, movimiento, etc…
-- Estructura del juego: clases utilizadas, pantallas
-○ Conclusiones: ej. diferencia aprendida entre la representación lógica y la gráfica etc..
+Datos curiosos: 
+- Sprites hechos por mí, exceptuando el botón, dpad (sprite que no usé al final)  y los de Bart y Homer, estos dos últimos son pngs en baja resolución modificados ligeramente
+- Música hecha por mí.
